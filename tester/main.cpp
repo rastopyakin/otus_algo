@@ -1,3 +1,4 @@
+#include <exception>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -12,11 +13,11 @@
 
 namespace fs = std::filesystem;
 
-class test_data {
+class test_files {
 public:
   using test_t = std::tuple<std::string, std::string, int>;
 public:
-  test_data(const fs::path &path) {
+  test_files(const fs::path &path) {
     std::smatch match;
 
     for (const auto &entry : fs::directory_iterator {path}) {
@@ -48,48 +49,64 @@ private:
   }
 };
 
+class tester {
+public:
+  tester(const std::string &task_name) : task_name(task_name) {}
+  void run_tests(const std::vector<test_files::test_t> &filenames) {
+
+    std::string in_file, out_file;
+    int test_number = 0;
+    std::ifstream file;
+    std::string input;
+    std::string test_output;
+    std::string output;
+    reproc::sink::string sink{output};
+
+    for (const auto &test : filenames) {
+
+      std::tie(in_file, out_file, test_number) = test;
+
+      file.open(in_file);
+      std::getline(file, input);
+      input.append("\n");
+      file.close();
+
+
+      file.open(out_file);
+      std::getline(file, test_output);
+      file.close();
+
+      reproc::process process;
+      process.start(std::vector{task_name});
+
+      std::cout << "running test number " << test_number << "\n";
+      process.write(
+        reinterpret_cast<const uint8_t *>(input.c_str()), input.size());
+      output.clear();           // otherwise output will contain all the previous results
+      reproc::drain(process, sink, reproc::sink::null);
+
+      if (output == test_output)
+        std::cout << "PASSED\n";
+      else {
+        std::cout << "FAILED\n";
+        std::cout << "in : " << input;
+        std::cout << "out : " << test_output << "\n";
+        std::cout << "task's out : " << output << "\n";
+      }
+      process.wait(reproc::infinite);
+    }
+  }
+private:
+  // reproc::process process;
+  std::string task_name;
+};
+
 int main(int argc, char *argv[]) {
 
-  test_data tests {fs::current_path()};
+  test_files tests {fs::current_path()};
 
-  for (const auto &test : tests.get_data()) {
-    std::string in_file, out_file;
-    int num = 0;
-    std::tie(in_file, out_file, num) = test;
-    std::cout << in_file << " " << out_file << " " << num << "\n";
-  }
-
-  std::ifstream test_file;
-  test_file.open("test.0.in");
-  std::string input;
-  std::getline(test_file, input);
-  test_file.close();
-
-  test_file.open("test.0.out");
-  std::string test_output;
-  std::getline(test_file, test_output);
-  test_file.close();
-
-  reproc::process process;
-
-  input.append("\n");
-  reproc::options options;
-
-  std::size_t n_bytes = 0;
-  std::error_code ec;
-
-  process.start(argv + 1);
-  std::tie(n_bytes, ec) = process.write(
-    reinterpret_cast<const uint8_t *>(input.c_str()), input.size());
-
-  std::string output;
-  reproc::sink::string sink{output};
-  reproc::drain(process, sink, reproc::sink::null);
-
-  if (output == test_output)
-    std::cout << "PASSED\n";
-  else
-    std::cout << "FAILED\n";
+  tester tester {argv[1]};
+  tester.run_tests(tests.get_data());
 
   return 0;
 }
