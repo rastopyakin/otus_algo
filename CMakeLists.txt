@@ -5,4 +5,5 @@ add_compile_options(-Wall)
 
 add_subdirectory(tester)
 add_subdirectory(strings)
+add_subdirectory(tickets)
 # enable_testing()
