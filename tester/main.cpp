@@ -75,6 +75,9 @@ public:
       file.open(out_file);
       std::getline(file, test_output);
       file.close();
+      auto pos = test_output.find('\r');
+      if (pos != std::string::npos)
+        test_output.erase(pos);
 
       reproc::process process;
       process.start(std::vector{task_name});
