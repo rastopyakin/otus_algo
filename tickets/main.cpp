@@ -1,5 +1,4 @@
 #include <iostream>
-#include <cmath>
 
 uint64_t counter = 0;
 
@@ -38,21 +37,32 @@ private:
   }
 };
 
+uint64_t count(int n_digits, int sum) {
+  uint64_t counter = 0;
+  if (n_digits == 1)
+      return 1;
 
+  int n_digits_left = n_digits/2;
+  int n_digits_right = n_digits - n_digits_left;
+  int s_left_min = sum >= n_digits_right*9  ? sum - n_digits_right*9 : 0;
+  int s_left_max = sum >= n_digits_left*9 ? n_digits_left*9 : sum;
+  for (int s1 = s_left_min; s1 <= s_left_max; s1++)
+    counter += count(n_digits_left, s1)*count(n_digits_right, sum - s1);
+
+  return counter;
+}
 
 int main(int argc, char *argv[]) {
   int N = 0;
   std::cin >> N;
-  // tickets_naive1(N, 0, 0);
-  // std::cout << tickets_naive3() << "\n";
-  // std::cout << counter << "\n";
 
   uint64_t counter = 0;
-  sums n_sum;
+
   for (int s = 0; s <= 9*N; s++) {
-    auto ss = n_sum.count(N, s);
+    auto ss = count(N, s);
     counter += ss*ss;
   }
-  std::cout << counter << "\n";
+
+  std::cout << counter;
   return 0;
 }
