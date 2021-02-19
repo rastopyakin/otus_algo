@@ -1,7 +1,9 @@
+#include <bits/stdint-uintn.h>
 #include <exception>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <system_error>
 #include <tuple>
@@ -59,8 +61,8 @@ public:
     std::ifstream file;
     std::string input;
     std::string test_output;
-    std::string output;
-    reproc::sink::string sink{output};
+    std::stringstream output;
+    reproc::sink::ostream sink{output};
 
     for (const auto &test : filenames) {
 
@@ -71,14 +73,6 @@ public:
       input.append("\n");
       file.close();
 
-
-      file.open(out_file);
-      std::getline(file, test_output);
-      file.close();
-      auto pos = test_output.find('\r');
-      if (pos != std::string::npos)
-        test_output.erase(pos);
-
       reproc::process process;
       process.start(std::vector{task_name});
 
@@ -88,14 +82,30 @@ public:
       output.clear();           // otherwise output will contain all the previous results
       reproc::drain(process, sink, reproc::sink::null);
 
-      if (output == test_output)
-        std::cout << "PASSED\n";
-      else {
+      file.open(out_file);
+
+      std::string out;
+      bool failed = false;
+      while (std::getline(file, test_output) && output >> out) {
+        auto pos = test_output.find('\r');
+        if (pos != std::string::npos)
+          test_output.erase(pos);
+        if (test_output != out) {
+          failed = true;
+          break;
+        }
+      }
+
+      file.close();
+      if (failed) {
         std::cout << "FAILED\n";
         std::cout << "in : " << input;
         std::cout << "out : " << test_output << "\n";
-        std::cout << "task's out : " << output << "\n";
+        std::cout << "task's out : " << out << "\n";
       }
+      else
+        std::cout << "PASSED\n";
+
       process.wait(reproc::infinite);
     }
   }
