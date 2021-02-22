@@ -17,7 +17,7 @@ namespace fs = std::filesystem;
 
 class test_files {
 public:
-  using test_t = std::tuple<std::string, std::string, int>;
+  using test_t = std::tuple<fs::path, fs::path, int>;
 public:
   test_files(const fs::path &path) {
     std::smatch match;
@@ -39,13 +39,16 @@ private:
   const std::regex test_num_regex {R"(\d+)"};
 
   test_t process_entry(const fs::directory_entry &entry) {
-    std::string in_filename = entry.path().filename().string();
-    std::string out_filename = std::regex_replace(in_filename, std::regex{"\\.in"}, ".out");
-    if (fs::exists(fs::path(out_filename))) {
+    auto in_file = entry.path();
+    auto in_filename = in_file.filename().string();
+    auto out_filename = std::regex_replace(in_filename, std::regex{"\\.in"}, ".out");
+    auto out_file = entry.path().parent_path() / out_filename;
+
+    if (fs::exists(out_file)) {
       std::smatch match;
       std::regex_search(in_filename,  match, test_num_regex);
       int test_num = std::stoi(match.str());
-      return std::make_tuple(in_filename, out_filename, test_num);
+      return std::make_tuple(in_file, out_file, test_num);
     }
     return std::make_tuple("", "", 0);
   }
@@ -54,9 +57,9 @@ private:
 class tester {
 public:
   tester(const std::string &task_name) : task_name(task_name) {}
-  void run_tests(const std::vector<test_files::test_t> &filenames) {
+  void run_tests(const std::vector<test_files::test_t> &files) {
 
-    std::string in_file, out_file;
+    fs::path in_file, out_file;
     int test_number = 0;
     std::ifstream file;
     std::string input;
@@ -64,7 +67,7 @@ public:
     std::stringstream output;
     reproc::sink::ostream sink{output};
 
-    for (const auto &test : filenames) {
+    for (const auto &test : files) {
 
       std::tie(in_file, out_file, test_number) = test;
 
@@ -79,7 +82,6 @@ public:
       std::cout << "running test number " << test_number << "\n";
       process.write(
         reinterpret_cast<const uint8_t *>(input.c_str()), input.size());
-
 
       reproc::drain(process, sink, reproc::sink::null);
 
@@ -106,9 +108,8 @@ public:
 
       while (std::getline(output, out)) {
         if (!out.empty())
-          std::cout << "too much data it task's out\n";
+          std::cout << "too much data in task's out\n";
       }
-
 
       output.clear();
       output.str(std::string{}); // otherwise output will contain all the previous results
@@ -133,7 +134,12 @@ private:
 
 int main(int argc, char *argv[]) {
 
-  test_files tests {fs::current_path()};
+  std::string dir {};
+
+  if (argc == 3)
+    dir = argv[2];
+
+  test_files tests {fs::current_path() / dir};
 
   tester tester {argv[1]};
   tester.run_tests(tests.get_data());
