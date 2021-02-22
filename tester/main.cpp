@@ -23,7 +23,7 @@ public:
     std::smatch match;
 
     for (const auto &entry : fs::directory_iterator {path}) {
-     std::string s = entry.path().filename().string();
+      std::string s = entry.path().filename().string();
       if (fs::is_regular_file(entry) &&
           std::regex_match(s, match, file_regex)) {
         tests.push_back(process_entry(entry));
@@ -79,24 +79,41 @@ public:
       std::cout << "running test number " << test_number << "\n";
       process.write(
         reinterpret_cast<const uint8_t *>(input.c_str()), input.size());
-      output.clear();           // otherwise output will contain all the previous results
+
+
       reproc::drain(process, sink, reproc::sink::null);
 
       file.open(out_file);
 
       std::string out;
       bool failed = false;
-      while (std::getline(file, test_output) && output >> out) {
+
+      while (std::getline(file, test_output)) {
+
         auto pos = test_output.find('\r');
         if (pos != std::string::npos)
           test_output.erase(pos);
-        if (test_output != out) {
-          failed = true;
-          break;
+
+        if (std::getline(output, out)) {
+          if (test_output != out) {
+            failed = true;
+            break;
+          }
         }
+        else
+          std::cout << "too much data in file\n";
       }
 
+      while (std::getline(output, out)) {
+        if (!out.empty())
+          std::cout << "too much data it task's out\n";
+      }
+
+
+      output.clear();
+      output.str(std::string{}); // otherwise output will contain all the previous results
       file.close();
+
       if (failed) {
         std::cout << "FAILED\n";
         std::cout << "in : " << input;
