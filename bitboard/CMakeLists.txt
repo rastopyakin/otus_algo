@@ -9,11 +9,11 @@ target_compile_features(king PRIVATE cxx_std_17)
 add_executable(knight knight.cpp)
 target_compile_features(knight PRIVATE cxx_std_17)
 
-add_executable(castle castle.cpp)
+add_executable(castle castle.cpp bitboard.cpp)
 target_compile_features(castle PRIVATE cxx_std_17)
 
-add_executable(bishop bishop.cpp)
+add_executable(bishop bishop.cpp bitboard.cpp)
 target_compile_features(bishop PRIVATE cxx_std_17)
 
-add_executable(queen queen.cpp)
+add_executable(queen queen.cpp bitboard.cpp)
 target_compile_features(queen PRIVATE cxx_std_17)
