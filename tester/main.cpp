@@ -71,17 +71,18 @@ public:
 
       std::tie(in_file, out_file, test_number) = test;
 
-      file.open(in_file);
-      std::getline(file, input);
-      input.append("\n");
-      file.close();
-
       reproc::process process;
       process.start(std::vector{task_name});
 
-      std::cout << "running test number " << test_number << "\n";
-      process.write(
+      file.open(in_file);
+      while(std::getline(file, input)) {
+        input.append("\n");
+        process.write(
         reinterpret_cast<const uint8_t *>(input.c_str()), input.size());
+      }
+      file.close();
+
+      std::cout << "running test number " << test_number << "\n";
 
       reproc::drain(process, sink, reproc::sink::null);
 
