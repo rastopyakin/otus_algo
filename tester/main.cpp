@@ -97,6 +97,7 @@ public:
           test_output.erase(pos);
 
         if (std::getline(output, out)) {
+          // std::cout << test_output << " vs " << out << "\n";
           if (test_output != out) {
             failed = true;
             break;
@@ -106,10 +107,11 @@ public:
           std::cout << "too much data in file\n";
       }
 
-      while (std::getline(output, out)) {
-        if (!out.empty())
-          std::cout << "too much data in task's out\n";
-      }
+      if (!failed)
+        while (std::getline(output, out)) {
+          if (!out.empty())
+            std::cout << "too much data in task's out\n";
+        }
 
       output.clear();
       output.str(std::string{}); // otherwise output will contain all the previous results
