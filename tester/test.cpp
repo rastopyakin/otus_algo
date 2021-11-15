@@ -5,7 +5,7 @@
 #include <fstream>
 #include <ios>
 
-void Test::run(Problem *problem, const test_file_t &test_file) {
+void Test::run(Problem *problem, const test_case_t &test_file) {
   _id = test_file.number;
   _out = fill(test_file.out);
   _in = fill(test_file.in);

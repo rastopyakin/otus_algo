@@ -16,7 +16,7 @@ public:
 public:
   Test()= default;
   ~Test() = default;
-  void run(Problem *problem, const test_file_t &test_file);
+  void run(Problem *problem, const test_case_t &test_file);
   void check(Validator *validator);
   bool passed() const { return _passed; }
   const std::string_view in() const {return data_view_t {_in};}
