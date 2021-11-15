@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
     std::getline(std::cin, str);
     auto it = str.find_last_of('\r');
     str.erase(it);
-    std::cout << str.length();
+    std::cout << str.length() << "\n";
 
     return 0;
 }

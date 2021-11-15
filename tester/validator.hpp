@@ -10,6 +10,7 @@ public:
   ~Validator() = default;
   bool check(Test *test);
 private:
+  bool validate(Test *test);
   Logger *_logger;
 };
 
