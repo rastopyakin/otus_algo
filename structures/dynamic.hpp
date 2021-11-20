@@ -60,19 +60,11 @@ public:
   }
 
   void add(T item, size_t index) {
-    if (_size >= _realloc.capacity()) {
-      auto new_array = _realloc.realloc();
-      // std::cout << "Resized : " << _realloc.capacity() << "\n";
-      std::copy_n(_array.get(), index, new_array.get());
-      new_array[index] = item;
-      std::copy_n(_array.get() + index, _size - index,
-                  new_array.get() + index + 1);
-      _array.swap(new_array);
-    } else {
-      std::move(_array.get() + index, _array.get() + _size,
-                _array.get() + index + 1);
-      _array[index] = item;
-    }
+    resize();
+    std::move(_array.get() + index, _array.get() + _size,
+              _array.get() + index + 1);
+    _array[index] = item;
+
     _size++;
   }
 
@@ -85,7 +77,7 @@ public:
       auto new_array = _realloc.realloc();
       std::copy_n(_array.get(), _size, new_array.get());
       _array.swap(new_array);
-      // std::cout << "Resized: " << _realloc.capacity() << "\n";
+      std::cout << "Resized: " << _realloc.capacity() << "\n";
     }
   }
 
@@ -96,5 +88,7 @@ private:
   ReallocStrategy _realloc;
   pointer _array;
 };
+
+
 
 #endif /* DYNAMIC_HPP */

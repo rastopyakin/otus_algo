@@ -70,20 +70,20 @@ template <class T> using FactorArray = Array<T, FactorAlloc<T>>;
 void t();
 
 int main(int argc, char *argv[]) {
-  int N[] = {5'000, 10'000, 20'000, 40'000, 80'000, 160'000, 320'000, 640'000};
+  int N[] = {5'000, 10'000, 20'000, 40'000, 80'000, 160'000, 320'000};
 
 
   // for (int n = 5'000; n <= 100'000'000; n *= 2) {
   for (int n : N) {
     // std::cout << n << " " << measure_adding<FactorArray<int>>(n) << "\n";
-    std::cout << n << " " << measure_random_adding<VectorArray<int>>(n) << "\n";
+    std::cout << n << " " << measure_random_adding<FactorArray<int>>(n) << "\n";
   }
   // t();
   return 0;
 }
 
 void t() {
-  SingleArray<int> array{};
+  FactorArray<int> array{};
   std::mt19937_64 gen;
   size_t index;
   for (int i = 0; i < 20; i++) {
