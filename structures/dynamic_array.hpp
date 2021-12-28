@@ -1,5 +1,5 @@
-#ifndef DYNAMIC_HPP
-#define DYNAMIC_HPP
+#ifndef DYNAMIC_ARRAY_HPP
+#define DYNAMIC_ARRAY_HPP
 
 #include <algorithm>
 #include <cstddef>
@@ -128,4 +128,4 @@ private:
   pointer _array;
 };
 
-#endif /* DYNAMIC_HPP */
+#endif /* DYNAMIC_ARRAY_HPP */

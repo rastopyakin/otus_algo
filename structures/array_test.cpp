@@ -4,7 +4,7 @@
 #include <utility>
 #include <vector>
 
-#include "dynamic.hpp"
+#include "dynamic_array.hpp"
 #include "measure_tools.hpp"
 #include "tests.hpp"
 

@@ -1,4 +1,4 @@
-#include "dynamic.hpp"
+#include "dynamic_array.hpp"
 #include "measure_tools.hpp"
 #include "wrapper.hpp"
 
@@ -20,11 +20,11 @@ int main(int argc, char *argv[]) {
              80'000, 160'000, 320'000, 640'000};
 
     // for (int n = 5'000; n <= 100'000'000; n *= 2) {
-  // for (int n : N) {
-    // std::cout << n << " " << measure_adding<WrappedDeque<int>>(n) << "\n";
-    // std::cout << n << " " << measure_random_adding<WrappedDeque<int>>(n)
-              // << "\n";
-  // }
+  for (int n : N) {
+    std::cout << n << " " << measure_adding<WrappedDeque<int>>(n) << "\n";
+    std::cout << n << " " << measure_random_adding<WrappedDeque<int>>(n)
+              << "\n";
+  }
 
   return 0;
 }

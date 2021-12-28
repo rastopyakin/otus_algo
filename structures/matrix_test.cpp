@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "dynamic.hpp"
+#include "dynamic_array.hpp"
 #include "matrix_array.hpp"
 #include "tests.hpp"
 
