@@ -8,8 +8,8 @@ template <class T> using FactorArray = Array<T, FactorAlloc<T>>;
 template <class T> using FactorMatrix = MatrixArray<T, FactorArray>;
 
 int main(int argc, char *argv[]) {
-  // m_test();
-  std::cout << "Factor matrix random add : " << random_add<FactorMatrix<int>>();
+
+  std::cout << "Factor matrix random add : " << random_add<FactorMatrix<int>>(100'000);
 
   return 0;
 }

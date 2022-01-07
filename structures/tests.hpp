@@ -1,19 +1,18 @@
 #ifndef TESTS_HPP
 #define TESTS_HPP
 
-#include <vector>
+#include <deque>
 #include <random>
 #include "measure_tools.hpp"
 
 template<class Array>
-const char* random_add() {
+const char* random_add(int n_elems = 1000) {
   Array array;
-  std::vector<int> vec;
+  std::deque<int> vec;
 
   std::mt19937_64 gen;
   size_t index;
 
-  const int n_elems = 1000;
   for (int i = 0; i < n_elems; i++) {
     index = scale_gen(gen, 0, i);
     array.add(i, index);

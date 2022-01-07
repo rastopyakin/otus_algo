@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.10)
 
 project(structures LANGUAGES CXX)
 
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
-add_executable(array_measure array_measure.cpp)
+add_executable(array_measure array_measure.cpp measure_tools.cpp)
 target_compile_options(array_measure PRIVATE -std=c++17)
 
 
@@ -13,3 +13,6 @@ target_compile_options(array_test PRIVATE -std=c++17)
 
 add_executable(matrix_test matrix_test.cpp)
 target_compile_options(matrix_test PRIVATE -std=c++17)
+
+add_executable(matrix_measure matrix_measure.cpp measure_tools.cpp)
+target_compile_options(matrix_measure PRIVATE -std=c++17)

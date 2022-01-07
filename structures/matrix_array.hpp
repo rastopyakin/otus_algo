@@ -12,6 +12,8 @@ public:
   MatrixArray() : _chunks{} { _chunks.add_back(IndexChunk{}); }
   ~MatrixArray() = default;
 
+  using value_type = T;
+
   struct IndexChunk : public Chunk<T> {
     IndexChunk() = default;
     IndexChunk(IndexChunk &&) = default;
@@ -67,7 +69,7 @@ public:
   size_t n_chunks() const { return _chunks.size(); };
 
 public:
-  static constexpr size_t chunk_size = 5;
+  static constexpr size_t chunk_size = 2047;
 
 private:
   size_t locate_chunk(size_t pos) {

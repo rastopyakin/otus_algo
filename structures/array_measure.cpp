@@ -16,14 +16,14 @@ template <class T> using WrappedList = Wrapper<std::list<T>>;
 template <class T> using WrappedDeque = Wrapper<std::deque<T>>;
 
 int main(int argc, char *argv[]) {
-  int N[] = {2'500,  5'000,   10'000,  20'000, 40'000,
-             80'000, 160'000, 320'000, 640'000};
 
-    // for (int n = 5'000; n <= 100'000'000; n *= 2) {
-  for (int n : N) {
-    std::cout << n << " " << measure_adding<WrappedDeque<int>>(n) << "\n";
-    std::cout << n << " " << measure_random_adding<WrappedDeque<int>>(n)
-              << "\n";
+  for (int n = 1'000; n <= 300'000; n *= 1.5) {
+    // for (int n : N) {
+    std::cout << n << " " << measure_adding_v2<WrappedDeque<int>>(n) << "\n";
+    // std::cout << n << " " << measure_mean_random_access<WrappedDeque<int>>(n)
+    // << "\n";
+    // std::cout << n << " " << measure_random_adding<WrappedDeque<int>>(n)
+              // << "\n";
   }
 
   return 0;
