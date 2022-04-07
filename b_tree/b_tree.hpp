@@ -10,12 +10,13 @@
 #include <queue>
 #include <string>
 #include <utility>
+#include <vector>
 
 template <class T> class BSTree {
-  struct node {
-    node(T t) : payload{t} {}
+  struct node_t {
+    node_t(T t) : payload{t} {}
     T payload;
-    std::unique_ptr<node> left, right;
+    std::unique_ptr<node_t> left, right;
   };
 
 public:
@@ -25,20 +26,24 @@ public:
 
   void display() const;
 
+  bool search(const T &e) { return search(e, root.get()); }
+
+  void remove(const T &e) { remove(e, root); }
+
 private:
   // TODO: check if there is performance penalty due to pointers passing
-  std::unique_ptr<node> insert(T t, std::unique_ptr<node> &_root) {
+  std::unique_ptr<node_t> insert(T t, std::unique_ptr<node_t> &_root) {
     if (!_root)
-      return std::make_unique<node>(t);
+      return std::make_unique<node_t>(t);
     if (t < _root->payload) {
       _root->left = insert(t, _root->left);
-    } else {
+    } else if (t > _root->payload) {
       _root->right = insert(t, _root->right);
     }
     return std::move(_root);
   }
 
-  void traverse(node *_root) {
+  void traverse(node_t *_root) {
     if (!_root)
       return;
     traverse(_root->left.get());
@@ -46,10 +51,70 @@ private:
     traverse(_root->right.get());
   }
 
+  bool search(const T &e, node_t *_root) {
+    if (!_root)
+      return false;
+
+    if (e < _root->payload)
+      return search(e, _root->left.get());
+    else if (e > _root->payload)
+      return search(e, _root->right.get());
+    else
+      return true;
+  }
+
+  void remove(const T &e, std::unique_ptr<node_t> &_root,
+              node_t *parent = nullptr) {
+    if (!_root)
+      return;
+
+    if (e < _root->payload)
+      remove(e, _root->left, _root.get());
+    else if (e > _root->payload)
+      remove(e, _root->right, _root.get());
+    else
+      remove_node(_root.get(), parent);
+  }
+
+  void remove_node(node_t *node, node_t *parent) {
+    if (node->left && node->right) {
+      node_t *min_in_right = node->right.get();
+      parent = node;
+      while (min_in_right->left) {
+        parent = min_in_right;
+        min_in_right = min_in_right->left.get();
+      }
+
+      std::swap(node->payload, min_in_right->payload);
+      node = min_in_right;
+    }
+
+    auto &child = node->left ? node->left : node->right;
+
+    if (!parent)
+      root = std::move(child);
+    else if (parent->left.get() == node)
+      parent->left = std::move(child);
+    else
+      parent->right = std::move(child);
+  }
+
 private:
-  std::unique_ptr<node> root;
-  void foo();
+  std::unique_ptr<node_t> root;
 };
+
+// TODO: the tree displaying code below is a mess, express better using
+// operations the tree has
+
+// node_pos_t is the same tree node with additional info: level, position,
+// parent shift_positions: shifts positions of all children of a given root
+// check_positions: if to nodes overlap then shift them accordingly with the
+// containing subtree
+// check_level: checks all neigbour pair on a given level
+
+// display: basically builds the tree with all additional info as it is in
+// node_pos_t, then checks neigbours on all levels and overlaps between a node
+// and its neigbour's child, which would make the tree edges impossible to draw
 
 template <class T> struct node_pos_t {
   int level;
@@ -125,8 +190,7 @@ bool check_overlaps(Cont<node_pos_t<T>> &positions) {
   if (std::distance(std::begin(positions), std::end(positions)) < 4)
     return true;
 
-  for (auto i = positions.begin(); i != std::prev(positions.end());
-       i++) {
+  for (auto i = positions.begin(); i != std::prev(positions.end()); i++) {
     if (auto next = std::next(i); next->l && (next->level == i->level))
       stable = check_positions(&(*i), &(*next->l));
 
@@ -141,16 +205,19 @@ template <class T> void BSTree<T>::display() const {
 
   using node_pos = node_pos_t<T>;
 
+  if (!root) return;
+
   std::list<node_pos> positions;
 
-  std::queue<BSTree<T>::node *> nodes;
+  std::queue<BSTree<T>::node_t *> nodes;
+
   nodes.push(root.get());
 
   std::queue<node_pos> pos_queue;
   pos_queue.push(node_pos{.level = 0, .position = 0, .payload = root->payload});
 
   while (!nodes.empty()) {
-    BSTree<T>::node *node = nodes.front();
+    BSTree<T>::node_t *node = nodes.front();
     nodes.pop();
 
     node_pos pos = pos_queue.front();
