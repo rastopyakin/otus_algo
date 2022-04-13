@@ -23,18 +23,19 @@ int main(int argc, char *argv[]) {
 
   TestCases tests{fs::current_path() / dir};
 
-  Test test{};
   Logger logger;
+
+  Test test{&logger};
 
   Validator validator{&logger};
 
   for (const auto &test_case : tests.get()) {
-    std::cout << "Running test#" << test_case.number << " ...\n";
     test.run(&problem, test_case);
     test.check(&validator);
+    logger.log_exec_time(&test);
   }
 
-  logger.export_logs();
+  logger.export_exec_time();
 
   return 0;
 }

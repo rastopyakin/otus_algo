@@ -20,3 +20,5 @@ target_link_libraries(reproc_poll reproc++ Threads::Threads)
 
 add_executable(test3 test3.cpp)
 add_executable(cat cat.cpp)
+add_executable(str_equal str_equal.cpp)
+target_compile_options(str_equal PRIVATE -std=c++17)

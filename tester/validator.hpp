@@ -11,6 +11,7 @@ public:
   bool check(Test *test);
 private:
   bool validate(Test *test);
+  void log_failure(Test *test);
   Logger *_logger;
 };
 
