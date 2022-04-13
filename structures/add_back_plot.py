@@ -1,4 +1,4 @@
-from structures.plot_tools import *
+from plot_tools import *
 
 def model_array_iteration(n_vals) :
     time = 0
