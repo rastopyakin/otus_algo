@@ -69,7 +69,7 @@ public:
   size_t n_chunks() const { return _chunks.size(); };
 
 public:
-  static constexpr size_t chunk_size = 1023;
+  static constexpr size_t chunk_size = 4095;
 
 private:
   size_t locate_chunk(size_t pos) {

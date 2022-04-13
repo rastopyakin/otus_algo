@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <memory>
 #include <random>
 #include <utility>
 #include <vector>
@@ -61,8 +62,8 @@ template <class Array> double add_back_n(long N) {
   return (finish - start).count();
 }
 
-template <class Array> double measure_adding(long N) {
-  return avg_fn_result(1.0e-2, add_back_n<Array>, N);
+template <class Array> double measure_adding(long N, double tolerance = 1.0e-2) {
+  return avg_fn_result(tolerance, add_back_n<Array>, N);
 }
 
 // same as uniform_distribution_int<size_t> but just a function
@@ -108,13 +109,16 @@ double access_time(Array &arr, Generator &gen, int n_attempts) {
   chr::time_point<chr::high_resolution_clock> start, finish;
 
   std::uniform_int_distribution<size_t> dist {0, arr.size() - 1};
-  size_t index = dist(gen);
-  // std::cerr << "index : " << index << "\n";
+  // size_t index = dist(gen);
+  typename Array::value_type *value_p;
   for (int i = 0; i < n_attempts; i++) {
+    size_t index = dist(gen);
     start = chr::high_resolution_clock::now();
-    // increment needed to prevent the .get() call to be optimized out
-    arr.get(index)++;
+
+    value_p = std::addressof(arr.get(index));
+
     finish = chr::high_resolution_clock::now();
+    *value_p <<= 1;
     time += (finish - start).count();
   }
 
@@ -125,10 +129,20 @@ template <class Array>
 double measure_mean_random_access(int array_size, double tolerance = 1.0e-2) {
 
   Array arr;
-  for (int i = 0; i < array_size; i++)
-    arr.add_back(i);
-
+  // for (int i = 0; i < array_size; i++)
+    // arr.add_back(i);
   std::mt19937_64 gen{};
+  std::vector<size_t> indexes;
+  indexes.reserve(array_size);
+  std::generate_n(
+      std::back_inserter(indexes), array_size,
+      [&gen, size = 0]() mutable { return scale_gen(gen, 0, size++); });
+
+  for (int i = 0; i < array_size; i++) {
+    arr.add(i, indexes[i]);
+  }
+
+
   return avg_fn_result(tolerance, access_time<Array, std::mt19937_64>, arr, gen, 10);
 }
 
