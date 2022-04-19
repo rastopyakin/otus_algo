@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <cstddef>
 #include <iterator>
 #include <memory>
 #include <random>
@@ -52,6 +53,8 @@ double avg_fn_result(double tolerance, F f, Args &&...args) {
   return time_avg;
 }
 
+namespace chr = std::chrono;
+
 template <template <class> class Tree>
 double insert_n(const std::vector<int> &numbers) {
 
@@ -78,8 +81,6 @@ template <template <class> class Tree> double measure_insert_ordered(int N) {
 
 template <template <class> class Tree> double measure_insert_random(int N) {
 
-  namespace chr = std::chrono;
-
   std::mt19937 gen;
   std::uniform_int_distribution<int> d{};
 
@@ -95,6 +96,55 @@ template <template <class> class Tree> double measure_insert_random(int N) {
       tree.insert(numbers[i]);
     }
     finish = chr::high_resolution_clock::now();
+    return static_cast<double>((finish - start).count());
+  };
+
+  return avg_fn_result(10e-3, target_fn);
+}
+
+template <template <class> class Tree> double measure_search_random(int N) {
+
+  std::mt19937 gen;
+  std::uniform_int_distribution<int> d{};
+
+  std::vector<int> numbers;
+  std::generate_n(std::back_inserter(numbers), N,
+                  [&gen, &d]() { return d(gen); });
+
+  Tree<int> tree;
+  for (int i : numbers)
+    tree.insert(i);
+
+  auto target_fn = [&tree, &numbers, &gen](int n) {
+    chr::time_point<chr::high_resolution_clock> start, finish;
+    std::uniform_int_distribution<size_t> d{0, numbers.size() - 1};
+    start = chr::high_resolution_clock::now();
+    for (size_t i = 0; i < n; i++)
+      tree.search(numbers[d(gen)]);
+    finish = chr::high_resolution_clock::now();
+
+    return static_cast<double>((finish - start).count());
+  };
+
+  return avg_fn_result(10e-3, target_fn, N / 10);
+}
+template <template <class> class Tree> double measure_search_ordered(int N) {
+
+
+  Tree<int> tree;
+  for (int i = 0; i < N; i++)
+    tree.insert(i);
+
+  auto target_fn = [&tree, N]() {
+    chr::time_point<chr::high_resolution_clock> start, finish;
+    std::mt19937 gen;
+    std::uniform_int_distribution<> d{0, N};
+
+    start = chr::high_resolution_clock::now();
+    for (int i = 0; i < N/10; i++)
+      tree.search(d(gen));
+    finish = chr::high_resolution_clock::now();
+
     return static_cast<double>((finish - start).count());
   };
 
