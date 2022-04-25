@@ -55,12 +55,6 @@ double avg_fn_result(double tolerance, F f, Args &&...args) {
 
 namespace chr = std::chrono;
 
-template <template <class> class Tree>
-double insert_n(const std::vector<int> &numbers) {
-
-  Tree<int> tree;
-}
-
 template <template <class> class Tree> double measure_insert_ordered(int N) {
 
   namespace chr = std::chrono;

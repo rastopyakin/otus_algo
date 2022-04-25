@@ -25,7 +25,7 @@ protected:
   };
 
 public:
-  void insert(T t) { root = insert(t, std::move(root)); }
+  void insert(T t) { insert(t, root); }
 
   void traverse() { traverse(root.get()); }
 
@@ -36,17 +36,18 @@ public:
   void remove(const T &e) { remove(e, root); }
 
 protected:
-  // TODO: check if there is performance penalty due to pointers passing
-  template <class Node>
-  std::unique_ptr<Node> insert(T t, std::unique_ptr<Node> &&_root) {
-    if (!_root)
-      return std::make_unique<Node>(t);
-    if (t < _root->payload) {
-      _root->left = insert(t, std::move(_root->left));
-    } else if (t > _root->payload) {
-      _root->right = insert(t, std::move(_root->right));
+  // The version which returns pointers works almost twice slower
+  template <class Node> void insert(T t, std::unique_ptr<Node> &_root) {
+    if (!_root) {
+      _root = std::make_unique<Node>(t);
+      return;
     }
-    return std::move(_root);
+
+    if (t < _root->payload) {
+      insert(t, _root->left);
+    } else if (t > _root->payload) {
+      insert(t, _root->right);
+    }
   }
 
   bool search(const T &e, node_t *_root) {
