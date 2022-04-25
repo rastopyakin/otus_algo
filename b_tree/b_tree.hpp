@@ -20,7 +20,6 @@ template <class T, class ConcreteNode> struct Node {
 
 template <class T> class BSTree {
 protected:
-
   struct node_t : public Node<T, node_t> {
     node_t(const T &t) : Node<T, node_t>{t} {}
   };
@@ -62,43 +61,37 @@ protected:
       return true;
   }
 
-  void remove(const T &e, std::unique_ptr<node_t> &_root,
-              node_t *parent = nullptr) {
+  void remove(const T &e, std::unique_ptr<node_t> &_root) {
     if (!_root)
       return;
 
     if (e < _root->payload)
-      remove(e, _root->left, _root.get());
+      remove(e, _root->left);
     else if (e > _root->payload)
-      remove(e, _root->right, _root.get());
+      remove(e, _root->right);
     else
-      remove_node(_root.get(), parent);
+      remove_node(_root);
   }
 
-  void remove_node(node_t *node, node_t *parent) {
-    if (node->left && node->right) {
-      node_t *min_in_right = node->right.get();
-      parent = node;
-      while (min_in_right->left) {
-        parent = min_in_right;
-        min_in_right = min_in_right->left.get();
-      }
+  void remove_node(std::unique_ptr<node_t> &node) {
 
-      std::swap(node->payload, min_in_right->payload);
-      node = min_in_right;
+    if (!node->left || !node->right) {
+      auto &child = node->left ? node->left : node->right;
+      node = std::move(child);
+      return;
     }
 
-    auto &child = node->left ? node->left : node->right;
+    std::unique_ptr<node_t> *min_in_right = &node->right;
 
-    if (!parent)
-      root = std::move(child);
-    else if (parent->left.get() == node)
-      parent->left = std::move(child);
-    else
-      parent->right = std::move(child);
+    while ((*min_in_right)->left) {
+      min_in_right = &((*min_in_right)->left);
+    }
+
+    std::swap(node->payload, (*min_in_right)->payload);
+    remove_node(*min_in_right);
   }
 
-  template<class Node> void display(const Node * _root) const;
+  template <class Node> void display(const Node *_root) const;
 
 protected:
   std::unique_ptr<node_t> root;
