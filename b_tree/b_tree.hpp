@@ -12,43 +12,42 @@
 #include <utility>
 #include <vector>
 
+template <class T, class ConcreteNode> struct Node {
+  Node(const T &t) : payload{t} {}
+  T payload;
+  std::unique_ptr<ConcreteNode> left, right;
+};
+
 template <class T> class BSTree {
-  struct node_t {
-    node_t(T t) : payload{t} {}
-    T payload;
-    std::unique_ptr<node_t> left, right;
+protected:
+
+  struct node_t : public Node<T, node_t> {
+    node_t(const T &t) : Node<T, node_t>{t} {}
   };
 
 public:
-  void insert(T t) { root = insert(t, root); }
+  void insert(T t) { root = insert(t, std::move(root)); }
 
   void traverse() { traverse(root.get()); }
 
-  void display() const;
+  void display() const { display(root.get()); }
 
   bool search(const T &e) { return search(e, root.get()); }
 
   void remove(const T &e) { remove(e, root); }
 
-private:
+protected:
   // TODO: check if there is performance penalty due to pointers passing
-  std::unique_ptr<node_t> insert(T t, std::unique_ptr<node_t> &_root) {
+  template <class Node>
+  std::unique_ptr<Node> insert(T t, std::unique_ptr<Node> &&_root) {
     if (!_root)
-      return std::make_unique<node_t>(t);
+      return std::make_unique<Node>(t);
     if (t < _root->payload) {
-      _root->left = insert(t, _root->left);
+      _root->left = insert(t, std::move(_root->left));
     } else if (t > _root->payload) {
-      _root->right = insert(t, _root->right);
+      _root->right = insert(t, std::move(_root->right));
     }
     return std::move(_root);
-  }
-
-  void traverse(node_t *_root) {
-    if (!_root)
-      return;
-    traverse(_root->left.get());
-    std::cout << _root->payload << "\n";
-    traverse(_root->right.get());
   }
 
   bool search(const T &e, node_t *_root) {
@@ -99,7 +98,9 @@ private:
       parent->right = std::move(child);
   }
 
-private:
+  template<class Node> void display(const Node * _root) const;
+
+protected:
   std::unique_ptr<node_t> root;
 };
 
@@ -201,23 +202,25 @@ bool check_overlaps(Cont<node_pos_t<T>> &positions) {
   return stable;
 }
 
-template <class T> void BSTree<T>::display() const {
+template <class T>
+template <class Node> void BSTree<T>::display(const Node * _root) const {
 
   using node_pos = node_pos_t<T>;
 
-  if (!root) return;
+  if (!_root)
+    return;
 
   std::list<node_pos> positions;
 
-  std::queue<BSTree<T>::node_t *> nodes;
+  std::queue<const Node *> nodes;
 
-  nodes.push(root.get());
+  nodes.push(_root);
 
   std::queue<node_pos> pos_queue;
-  pos_queue.push(node_pos{.level = 0, .position = 0, .payload = root->payload});
+  pos_queue.push(node_pos{.level = 0, .position = 0, .payload = _root->payload});
 
   while (!nodes.empty()) {
-    BSTree<T>::node_t *node = nodes.front();
+    const Node *node = nodes.front();
     nodes.pop();
 
     node_pos pos = pos_queue.front();
