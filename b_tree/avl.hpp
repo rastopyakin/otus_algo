@@ -3,9 +3,9 @@
 
 #include "b_tree.hpp"
 #include <algorithm>
-#include <cstdint>
 #include <iostream>
 #include <memory>
+#include <stack>
 #include <utility>
 
 template <class T> class AVLTree : public BSTree<T> {
@@ -16,14 +16,18 @@ template <class T> class AVLTree : public BSTree<T> {
     uint height;
   };
 
+  using BSTree<T>::display;
+
 public:
   void insert(T t) { root = insert(t, root); }
-  void display() const { BSTree<T>::display(root.get()); }
+  void remove(T t) { remove(t, root); }
+  void display() const { display(root.get()); }
 
-  void heights() const { heights(root.get()); }
+  void check_heights() const { check_heights(root); }
+
+  bool search(T t) {return search(t, root);}
 
 private:
-
   void smallLeftRotation(std::unique_ptr<node_t> &_root) {
     auto pivot = std::move(_root->right);
 
@@ -38,7 +42,7 @@ private:
   }
 
   void smallRightRotation(std::unique_ptr<node_t> &_root) {
-     auto pivot = std::move(_root->left);
+    auto pivot = std::move(_root->left);
 
     _root->left = std::move(pivot->right);
     _root->height = std::max(height(_root->left), height(_root->right)) + 1;
@@ -59,11 +63,14 @@ private:
     smallRightRotation(_root);
   }
 
-  int height(std::unique_ptr<node_t> &_node) {
+  int height(const std::unique_ptr<node_t> &_node) const {
     return _node ? _node->height : 0;
   }
 
   void keep_balance(std::unique_ptr<node_t> &_root) {
+
+    if (!_root)
+      return;
 
     if (height(_root->right) > height(_root->left) + 1) {
       if (height(_root->right->right) >= height(_root->right->left))
@@ -96,11 +103,88 @@ private:
     return std::move(_root);
   }
 
-  void heights(node_t *_root) const {
-    if (!_root) return;
-    heights(_root->left.get());
-    std::cout << _root->payload << ": h" << _root->height << "\n";
-    heights(_root->right.get());
+  void remove(T t, std::unique_ptr<node_t> &_root) {
+    if (!_root)
+      return;
+
+    if (t < _root->payload)
+      remove(t, _root->left);
+    else if (_root->payload < t)
+      remove(t, _root->right);
+    else {
+      remove_node(_root);
+      // return;
+    }
+
+    keep_balance(_root);
+  }
+
+  void remove_node(std::unique_ptr<node_t> &node) {
+    if (!node->left || !node->right) {
+      auto &child = node->left ? node->left : node->right;
+      node = std::move(child);
+      return;
+    }
+
+    std::unique_ptr<node_t> *min_in_right = &node->right;
+    std::stack<std::unique_ptr<node_t>*> parents_to_balance;
+    parents_to_balance.push(min_in_right);
+
+    while ((*min_in_right)->left) {
+      min_in_right = &((*min_in_right)->left);
+      parents_to_balance.push(min_in_right);
+    }
+
+    std::swap(node->payload, (*min_in_right)->payload);
+    remove_node(*min_in_right);
+    parents_to_balance.pop();
+
+    while (!parents_to_balance.empty()) {
+      keep_balance(*parents_to_balance.top());
+      parents_to_balance.pop();
+    }
+// remove_successor(node->right, node);
+  }
+
+  void remove_successor(std::unique_ptr<node_t> &successor, std::unique_ptr<node_t> &node) {
+    if (!successor)
+      return;
+
+    remove_successor(successor->left, node);
+
+    if (!successor->left) {
+      std::swap(node->payload, successor->payload);
+      remove_node(successor);
+      // return;
+    }
+
+    keep_balance(successor);
+  }
+
+  bool search(T t, std::unique_ptr<node_t> &_root) const {
+    if (!_root)
+      return false;
+
+    if (t < _root->payload)
+      return search(t, _root->left);
+    else if (_root->payload < t)
+      return search(t, _root->right);
+    else
+      return true;
+
+  }
+
+  void check_heights(const std::unique_ptr<node_t> &_root) const {
+    if (!_root)
+      return;
+    check_heights(_root->left);
+    int balance = height(_root->right) - height(_root->left);
+    if (balance < -1 || balance > 1) {
+      std::cerr << _root->payload << ": unbalanced node\n";
+      std::cerr << "balance: " << balance << "\n";
+      // std::exit(1);
+    }
+    check_heights(_root->right);
   }
 
 private:

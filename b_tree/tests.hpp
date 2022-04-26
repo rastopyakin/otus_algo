@@ -133,9 +133,7 @@ void display_test() {
 }
 
 template <template<class> class Tree>
-void remove_visual_test() {
-
-  int n_elem = 10;
+void remove_visual_test(int n_elem = 10) {
 
   std::uniform_int_distribution<int> d{0, 100};
   auto [tree, elems] = make_random_tree<Tree>(n_elem, d);
