@@ -25,53 +25,32 @@ protected:
   };
 
 public:
-  void insert(T t) { insert(t, root); }
-
-  void traverse() { traverse(root.get()); }
+  void insert(T t) {
+    if (auto &node = search(t, root); !node)
+      node = std::make_unique<node_t>(t);
+  }
 
   void display() const { display(root.get()); }
 
-  bool search(const T &e) { return search(e, root.get()); }
+  bool search(const T &e) { return search(e, root) != nullptr; }
 
-  void remove(const T &e) { remove(e, root); }
+  void remove(const T &e) {
+    if (auto &node = search(e, root); node)
+      remove_node(node);
+  }
 
 protected:
-  // The version which returns pointers works almost twice slower
-  template <class Node> void insert(T t, std::unique_ptr<Node> &_root) {
-    if (!_root) {
-      _root = std::make_unique<Node>(t);
-      return;
-    }
 
-    if (t < _root->payload) {
-      insert(t, _root->left);
-    } else if (t > _root->payload) {
-      insert(t, _root->right);
-    }
-  }
-
-  bool search(const T &e, node_t *_root) {
+  std::unique_ptr<node_t> &search(const T &e, std::unique_ptr<node_t> &_root) {
     if (!_root)
-      return false;
+      return _root;
 
     if (e < _root->payload)
-      return search(e, _root->left.get());
+      return search(e, _root->left);
     else if (e > _root->payload)
-      return search(e, _root->right.get());
+      return search(e, _root->right);
     else
-      return true;
-  }
-
-  void remove(const T &e, std::unique_ptr<node_t> &_root) {
-    if (!_root)
-      return;
-
-    if (e < _root->payload)
-      remove(e, _root->left);
-    else if (e > _root->payload)
-      remove(e, _root->right);
-    else
-      remove_node(_root);
+      return _root;
   }
 
   void remove_node(std::unique_ptr<node_t> &node) {
