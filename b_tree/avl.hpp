@@ -19,7 +19,7 @@ template <class T> class AVLTree : public BSTree<T> {
   using BSTree<T>::display;
 
 public:
-  void insert(T t) { root = insert(t, root); }
+  void insert(T t) { insert(t, root); }
   void remove(T t) { remove(t, root); }
   void display() const { display(root.get()); }
 
@@ -69,9 +69,6 @@ private:
 
   void keep_balance(std::unique_ptr<node_t> &_root) {
 
-    if (!_root)
-      return;
-
     if (height(_root->right) > height(_root->left) + 1) {
       if (height(_root->right->right) >= height(_root->right->left))
         smallLeftRotation(_root);
@@ -89,18 +86,16 @@ private:
     _root->height = std::max(height(_root->left), height(_root->right)) + 1;
   }
 
-  std::unique_ptr<node_t> insert(T t, std::unique_ptr<node_t> &_root) {
+  void insert(T t, std::unique_ptr<node_t> &_root) {
     if (!_root)
-      return std::make_unique<node_t>(t);
+      _root = std::make_unique<node_t>(t);
     if (t < _root->payload) {
-      _root->left = insert(t, _root->left);
+      insert(t, _root->left);
     } else if (t > _root->payload) {
-      _root->right = insert(t, _root->right);
+      insert(t, _root->right);
     }
 
     keep_balance(_root);
-
-    return std::move(_root);
   }
 
   void remove(T t, std::unique_ptr<node_t> &_root) {
@@ -113,10 +108,10 @@ private:
       remove(t, _root->right);
     else {
       remove_node(_root);
-      // return;
     }
 
-    keep_balance(_root);
+    if (_root)
+      keep_balance(_root);
   }
 
   void remove_node(std::unique_ptr<node_t> &node) {
@@ -135,6 +130,9 @@ private:
       parents_to_balance.push(min_in_right);
     }
 
+    // TODO: the following is essentially unwinding recursion, but is it possible to to
+    // write this down as a recursive function, which balances all the visited nodes and
+    // deletes only the needed one?
     std::swap(node->payload, (*min_in_right)->payload);
     remove_node(*min_in_right);
     parents_to_balance.pop();
@@ -143,22 +141,6 @@ private:
       keep_balance(*parents_to_balance.top());
       parents_to_balance.pop();
     }
-// remove_successor(node->right, node);
-  }
-
-  void remove_successor(std::unique_ptr<node_t> &successor, std::unique_ptr<node_t> &node) {
-    if (!successor)
-      return;
-
-    remove_successor(successor->left, node);
-
-    if (!successor->left) {
-      std::swap(node->payload, successor->payload);
-      remove_node(successor);
-      // return;
-    }
-
-    keep_balance(successor);
   }
 
   bool search(T t, std::unique_ptr<node_t> &_root) const {
