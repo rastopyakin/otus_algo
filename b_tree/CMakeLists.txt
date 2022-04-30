@@ -16,3 +16,7 @@ target_compile_features(tree_measures PRIVATE cxx_std_17)
 add_executable(avl_tree avl.cpp)
 target_include_directories(avl_tree PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_features(avl_tree PRIVATE cxx_std_17)
+
+add_executable(avl_visual avl_visual.cpp)
+target_include_directories(avl_visual PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(avl_visual PRIVATE cxx_std_17)

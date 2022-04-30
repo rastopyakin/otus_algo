@@ -16,7 +16,15 @@ template <class T, class ConcreteNode> struct Node {
   Node(const T &t) : payload{t} {}
   T payload;
   std::unique_ptr<ConcreteNode> left, right;
+
+  std::string display_str() const { return display_str(payload); };
+
+private:
+  template<class U>
+  std::string display_str(const U& _payload) const { return std::to_string(payload);}
+  std::string display_str(char c) const { return {c};}
 };
+
 
 template <class T> class BSTree {
 protected:
@@ -97,6 +105,13 @@ template <class T> struct node_pos_t {
   node_pos_t *parent = nullptr;
   node_pos_t *l = nullptr;
   node_pos_t *r = nullptr;
+
+  std::string display_str() const { return display_str(payload); };
+
+private:
+  template<class U>
+  std::string display_str(const U& _payload) const { return std::to_string(payload);}
+  std::string display_str(char c) const { return {c};}
 };
 
 template <class T> void shift_positions(int shift, node_pos_t<T> *root) {
@@ -108,7 +123,7 @@ template <class T> void shift_positions(int shift, node_pos_t<T> *root) {
 }
 
 template <class Node> int node_width(const Node &t) {
-  return std::to_string(t.payload).length();
+  return t.display_str().length();
 }
 
 template <class T>
@@ -266,7 +281,7 @@ void draw(const Cont<node_pos_t<T>> &positions) {
 
     int spaces = pos.position - nodes.length();
     int lines = 0;
-    std::string pld_str = std::to_string(pos.payload);
+    std::string pld_str = pos.display_str();
 
     if (pos.l) {
       int ed_pos = pos.l->position + node_width(*pos.l) / 2 + 1;
