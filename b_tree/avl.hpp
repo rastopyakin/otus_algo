@@ -1,31 +1,32 @@
 #ifndef AVL_HPP
 #define AVL_HPP
 
-#include "b_tree.hpp"
+#include "tree.hpp"
 #include <algorithm>
 #include <iostream>
 #include <memory>
 #include <stack>
 #include <utility>
 
-template <class T> class AVLTree : public BSTree<T> {
+template <class T>
+struct AVLNode : public Node<T, AVLNode<T>> {
+  AVLNode(const T &t, uint h = 1) : Node<T, AVLNode>{t}, height{h} {}
+  uint height;
+};
 
-  struct node_t : public Node<T, node_t> {
-    node_t(const T &t, uint h = 1) : Node<T, node_t>{t}, height{h} {}
+template <class T> class AVLTree : public Tree<AVLNode<T>> {
 
-    uint height;
-  };
-
-  using BSTree<T>::display;
+  using node_t = AVLNode<T>;
+  using Tree<node_t>::root;
 
 public:
   void insert(T t) { insert(t, root); }
   void remove(T t) { remove(t, root); }
-  void display() const { display(root.get()); }
+
+  using Tree<node_t>::display;
+  using Tree<node_t>::search;
 
   void check_heights() const { check_heights(root); }
-
-  bool search(T t) {return search(t, root);}
 
 private:
   void smallLeftRotation(std::unique_ptr<node_t> &_root) {
@@ -130,9 +131,9 @@ private:
       parents_to_balance.push(min_in_right);
     }
 
-    // TODO: the following is essentially unwinding recursion, but is it possible to to
-    // write this down as a recursive function, which balances all the visited nodes and
-    // deletes only the needed one?
+    // TODO: the following is essentially unwinding recursion, but is it possible to write
+    // this down as a recursive function, which balances all the visited nodes and deletes
+    // only the requested one?
     std::swap(node->payload, (*min_in_right)->payload);
     remove_node(*min_in_right);
     parents_to_balance.pop();
@@ -143,19 +144,6 @@ private:
     }
   }
 
-  bool search(T t, std::unique_ptr<node_t> &_root) const {
-    if (!_root)
-      return false;
-
-    if (t < _root->payload)
-      return search(t, _root->left);
-    else if (_root->payload < t)
-      return search(t, _root->right);
-    else
-      return true;
-
-  }
-
   void check_heights(const std::unique_ptr<node_t> &_root) const {
     if (!_root)
       return;
@@ -164,13 +152,10 @@ private:
     if (balance < -1 || balance > 1) {
       std::cerr << _root->payload << ": unbalanced node\n";
       std::cerr << "balance: " << balance << "\n";
-      // std::exit(1);
     }
     check_heights(_root->right);
   }
 
-private:
-  std::unique_ptr<node_t> root;
 };
 
 #endif /* AVL_HPP */
