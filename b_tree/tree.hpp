@@ -54,22 +54,19 @@ protected:
   std::unique_ptr<Node> root;
 };
 
-template <class T>
-struct DisplayNode : public Node<T, DisplayNode<T>, DisplayNode<T> *> {
+struct DisplayNode : public Node<std::string, DisplayNode, DisplayNode *> {
 // DisplayNode is the tree node with additional info: level, position, parent, and with
 // not owning pointers
-  using Base = Node<T, DisplayNode<T>, DisplayNode<T> *>;
+  using Base = Node<std::string, DisplayNode, DisplayNode*>;
 
-  DisplayNode(const T &pld) : Base{pld} {}
-  const std::string & display_str() const { return string; };
+  DisplayNode(const std::string &str) : Base{str} {}
 
   int level = 0;
   int position = 0;
   DisplayNode *parent = nullptr;
-  std::string string;
 };
 
-template <class T> void shift_positions(int shift, DisplayNode<T> *root) {
+void shift_positions(int shift, DisplayNode *root) {
   // shifts positions of all children of a given subtree
   root->position += shift;
   if (root->left)
@@ -82,8 +79,7 @@ template <class Node> int node_width(const Node &t) {
   return t.display_str().length();
 }
 
-template <class T>
-void check_positions(DisplayNode<T> *p_l, DisplayNode<T> *p_r) {
+void check_positions(DisplayNode *p_l, DisplayNode *p_r) {
 // if to nodes overlap then shift them accordingly with the containing subtree, so they
 // will have enough space between them
   bool need_fix = p_r->position <= p_l->position + node_width(*p_l);
@@ -91,7 +87,7 @@ void check_positions(DisplayNode<T> *p_l, DisplayNode<T> *p_r) {
 
     int shift = p_l->position + node_width(*p_l) - p_r->position;
 
-    DisplayNode<T> *root_to_shift = p_r;
+    DisplayNode *root_to_shift = p_r;
     while (root_to_shift->parent->left == root_to_shift) {
       root_to_shift = root_to_shift->parent;
     }
@@ -107,8 +103,8 @@ void check_positions(DisplayNode<T> *p_l, DisplayNode<T> *p_r) {
   }
 }
 
-template <template <class> class Cont, class T>
-void check_level(int level, Cont<DisplayNode<T>> &positions) {
+template <template <class> class Cont>
+void check_level(int level, Cont<DisplayNode> &positions) {
 // checks the postions of all neigbouring nodes on a given level
 
   auto is_lvl = [level](auto &pos) { return pos.level == level; };
@@ -124,8 +120,8 @@ void check_level(int level, Cont<DisplayNode<T>> &positions) {
   }
 }
 
-template <template <class> class Cont, class T>
-void check_overlaps(Cont<DisplayNode<T>> &positions) {
+template <template <class> class Cont>
+void check_overlaps(Cont<DisplayNode> &positions) {
 // checks overlap between a node and its neigbour's child, which would make the tree arcs
 // impossible to draw
 
@@ -138,87 +134,8 @@ void check_overlaps(Cont<DisplayNode<T>> &positions) {
   }
 }
 
-template <class Node> void Tree<Node>::display(const Node *_root) const {
-// basically builds the tree with all additional info as it is in DisplayNode, checks the
-// space between nodes upon each node insertion
-
-// stores the nodes in a list in order of level by level and left to right, because (i)
-// linear container makes the checks easier to implement and (ii) list never reallocates
-
-  using node_pos = DisplayNode<T>;
-
-  if (!_root)
-    return;
-
-  std::list<node_pos> positions;
-
-  std::queue<const Node *> nodes;
-
-  nodes.push(_root);
-
-  std::queue<node_pos> pos_queue;
-  pos_queue.push(node_pos{_root->payload});
-  pos_queue.back().string = _root->display_str();
-
-  while (!nodes.empty()) {
-    const Node *node = nodes.front();
-    nodes.pop();
-
-    node_pos pos = pos_queue.front();
-
-    positions.push_back(pos);
-
-    node_pos **child_upd = nullptr;
-    if (pos.parent)
-      child_upd = (pos.parent->right == &pos_queue.front()) ? &pos.parent->right
-                                                            : &pos.parent->left;
-    pos_queue.pop();
-
-    if (child_upd)
-      *child_upd = &positions.back();
-
-    if (node->left) {
-      nodes.push(node->left.get());
-      pos_queue.push(node_pos{node->left->payload});
-      pos_queue.back().level = pos.level + 1;
-      pos_queue.back().position = pos.position  - node_width(*node->left);
-      pos_queue.back().parent = &positions.back();
-      pos_queue.back().string = node->left->display_str();
-      positions.back().left = &pos_queue.back();
-    }
-
-    if (node->right) {
-      nodes.push(node->right.get());
-      pos_queue.push(node_pos{node->right->payload});
-      pos_queue.back().level = pos.level + 1;
-      pos_queue.back().position = pos.position + node_width(*node);
-      pos_queue.back().parent = &positions.back();
-      pos_queue.back().string = node->right->display_str();
-      positions.back().right = &pos_queue.back();
-    }
-
-    for (int level = pos.level; level > 1; level--) {
-      check_level(level, positions);
-      check_overlaps(positions);
-    }
-  }
-
-  for (int level = positions.back().level; level > 0; level--) {
-    check_level(level, positions);
-  }
-  check_overlaps(positions);
-
-  int min_pos =
-      std::min_element(positions.begin(), positions.end(),
-                       [](auto &a, auto &b) { return a.position < b.position; })
-          ->position;
-
-  shift_positions(-min_pos, &positions.front());
-  draw(positions);
-}
-
-template <template <class> class Cont, class T>
-void draw(const Cont<DisplayNode<T>> &positions) {
+template <template <class> class Cont>
+void draw(const Cont<DisplayNode> &positions) {
   int level = positions.front().level;
 
   std::string nodes, arcs;
@@ -255,6 +172,80 @@ void draw(const Cont<DisplayNode<T>> &positions) {
   }
   std::cout << nodes;
   std::cout << "\n";
+}
+
+template <class Node> void Tree<Node>::display(const Node *_root) const {
+// basically builds the tree with all additional info as it is in DisplayNode, checks the
+// space between nodes upon each node insertion
+
+// stores the nodes in a list in order of level by level and left to right, because (i)
+// linear container makes the checks easier to implement and (ii) list never reallocates
+
+  if (!_root)
+    return;
+
+  std::list<DisplayNode> positions;
+
+  std::queue<const Node *> nodes;
+
+  nodes.push(_root);
+
+  std::queue<DisplayNode> pos_queue;
+  pos_queue.push(DisplayNode {_root->display_str()});
+
+  while (!nodes.empty()) {
+    const Node *node = nodes.front();
+    nodes.pop();
+
+    DisplayNode pos = pos_queue.front();
+
+    positions.push_back(pos);
+
+    if (auto parent = pos.parent; parent) {
+      if (parent->left == &pos_queue.front())
+        parent->left = &positions.back();
+      else
+        parent->right = &positions.back();
+    }
+
+    pos_queue.pop();
+
+    if (node->left) {
+      nodes.push(node->left.get());
+      pos_queue.push(DisplayNode{node->left->display_str()});
+      pos_queue.back().level = pos.level + 1;
+      pos_queue.back().position = pos.position  - node_width(*node->left);
+      pos_queue.back().parent = &positions.back();
+      positions.back().left = &pos_queue.back();
+    }
+
+    if (node->right) {
+      nodes.push(node->right.get());
+      pos_queue.push(DisplayNode{node->right->display_str()});
+      pos_queue.back().level = pos.level + 1;
+      pos_queue.back().position = pos.position + node_width(*node);
+      pos_queue.back().parent = &positions.back();
+      positions.back().right = &pos_queue.back();
+    }
+
+    for (int level = pos.level; level > 1; level--) {
+      check_level(level, positions);
+      check_overlaps(positions);
+    }
+  }
+
+  for (int level = positions.back().level; level > 0; level--) {
+    check_level(level, positions);
+  }
+  check_overlaps(positions);
+
+  int min_pos =
+      std::min_element(positions.begin(), positions.end(),
+                       [](auto &a, auto &b) { return a.position < b.position; })
+          ->position;
+
+  shift_positions(-min_pos, &positions.front());
+  draw(positions);
 }
 
 #endif /* TREE_HPP */
