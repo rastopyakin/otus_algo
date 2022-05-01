@@ -1,4 +1,5 @@
 #include "avl.hpp"
+
 #include <algorithm>
 #include <functional>
 #include <iostream>
@@ -11,7 +12,7 @@
 enum {INSERT = 0, REMOVE, SEARCH, HELP};
 static const char *CMDSTR[] = {"ins", "rm", "src", "help"};
 
-using TREE_NODE_T = int;
+using TREE_NODE_T = std::string;
 
 template <class T> bool looks_like_command(std::string_view input_to_test) {
   std::stringstream ss;

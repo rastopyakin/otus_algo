@@ -112,21 +112,19 @@ void remove_test() {
 }
 
 template <template<class> class Tree>
-void display_test() {
+void display_test(int n_elem = 60) {
   Tree<int> tree;
 
   std::mt19937 gen;
   std::uniform_int_distribution<int> d{0, 1000};
 
   auto seed = std::time(0);
-  // seed = 1648069972;
-  // seed = 1648068713;
-  // seed = 1648074155;
+
   gen.seed(seed);
 
   std::cout << "seed: " << seed << "\n";
 
-  for (int i = 0; i < 60; i++)
+  for (int i = 0; i < n_elem; i++)
     tree.insert(d(gen));
 
   tree.display();
