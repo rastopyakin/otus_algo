@@ -54,31 +54,15 @@ protected:
   std::unique_ptr<Node> root;
 };
 
-// DisplayNode is the same tree node with additional info: level, position, parent, and
-// not owning pointers
-
-// shift_positions(): shifts positions of all children of a given subtree
-
-// check_positions(): if to nodes overlap then shift them accordingly with the containing
-// subtree, so they will have enough space between them
-
-// check_level(): checks all neigbour pair on a given level
-
-// check_overlaps(): checks overlaps between a node and its neigbour's child, which would
-// make the tree arcs impossible to draw
-
-// display(): basically builds the tree with all additional info as it is in DisplayNode,
-// checks the space between
-
-// display() stores the nodes in a list, because (i) linear container makes the
-// checks easier to implement and (ii) list never reallocates
-
 template <class T>
 struct DisplayNode : public Node<T, DisplayNode<T>, DisplayNode<T> *> {
+// DisplayNode is the tree node with additional info: level, position, parent, and with
+// not owning pointers
   using Base = Node<T, DisplayNode<T>, DisplayNode<T> *>;
 
   DisplayNode(const T &pld) : Base{pld} {}
   const std::string & display_str() const { return string; };
+
   int level = 0;
   int position = 0;
   DisplayNode *parent = nullptr;
@@ -86,6 +70,7 @@ struct DisplayNode : public Node<T, DisplayNode<T>, DisplayNode<T> *> {
 };
 
 template <class T> void shift_positions(int shift, DisplayNode<T> *root) {
+  // shifts positions of all children of a given subtree
   root->position += shift;
   if (root->left)
     shift_positions(shift, root->left);
@@ -99,7 +84,8 @@ template <class Node> int node_width(const Node &t) {
 
 template <class T>
 void check_positions(DisplayNode<T> *p_l, DisplayNode<T> *p_r) {
-
+// if to nodes overlap then shift them accordingly with the containing subtree, so they
+// will have enough space between them
   bool need_fix = p_r->position <= p_l->position + node_width(*p_l);
   if (need_fix) {
 
@@ -123,6 +109,8 @@ void check_positions(DisplayNode<T> *p_l, DisplayNode<T> *p_r) {
 
 template <template <class> class Cont, class T>
 void check_level(int level, Cont<DisplayNode<T>> &positions) {
+// checks the postions of all neigbouring nodes on a given level
+
   auto is_lvl = [level](auto &pos) { return pos.level == level; };
 
   auto l_beg = std::find_if(positions.begin(), positions.end(), is_lvl);
@@ -138,6 +126,8 @@ void check_level(int level, Cont<DisplayNode<T>> &positions) {
 
 template <template <class> class Cont, class T>
 void check_overlaps(Cont<DisplayNode<T>> &positions) {
+// checks overlap between a node and its neigbour's child, which would make the tree arcs
+// impossible to draw
 
   for (auto i = positions.begin(); i != std::prev(positions.end()); i++) {
     if (auto next = std::next(i); next->left && (next->level == i->level))
@@ -149,6 +139,11 @@ void check_overlaps(Cont<DisplayNode<T>> &positions) {
 }
 
 template <class Node> void Tree<Node>::display(const Node *_root) const {
+// basically builds the tree with all additional info as it is in DisplayNode, checks the
+// space between nodes upon each node insertion
+
+// stores the nodes in a list in order of level by level and left to right, because (i)
+// linear container makes the checks easier to implement and (ii) list never reallocates
 
   using node_pos = DisplayNode<T>;
 
