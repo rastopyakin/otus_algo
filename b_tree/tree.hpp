@@ -54,9 +54,13 @@ protected:
 // operations the tree has
 
 // node_pos_t is the same tree node with additional info: level, position,
-// parent shift_positions: shifts positions of all children of a given root
-// check_positions: if to nodes overlap then shift them accordingly with the
-// containing subtree
+// parent
+
+// shift_positions: shifts positions of all children of a given root
+
+// check_positions: if to nodes overlap then shift them accordingly with the containing
+// subtree
+
 // check_level: checks all neigbour pair on a given level
 
 // display: basically builds the tree with all additional info as it is in
@@ -93,7 +97,7 @@ template <class Node> int node_width(const Node &t) {
 }
 
 template <class T>
-bool check_positions(node_pos_t<T> *p_l, node_pos_t<T> *p_r) {
+void check_positions(node_pos_t<T> *p_l, node_pos_t<T> *p_r) {
 
   bool need_fix = p_r->position <= p_l->position + node_width(*p_l);
   if (need_fix) {
@@ -114,12 +118,10 @@ bool check_positions(node_pos_t<T> *p_l, node_pos_t<T> *p_r) {
 
     shift_positions(-shift / 2 - 1, root_to_shift);
   }
-
-  return !need_fix;
 }
 
 template <template <class> class Cont, class T>
-bool check_level(int level, Cont<node_pos_t<T>> &positions) {
+void check_level(int level, Cont<node_pos_t<T>> &positions) {
   auto is_lvl = [level](auto &pos) { return pos.level == level; };
 
   auto l_beg = std::find_if(positions.begin(), positions.end(), is_lvl);
@@ -127,33 +129,22 @@ bool check_level(int level, Cont<node_pos_t<T>> &positions) {
   // TODO: potential bug here: l_end will point to smth even if nothing found
   auto l_end = --std::find_if_not(l_beg, positions.end(), is_lvl);
 
-  bool stable = true;
-
   while (l_beg != l_end) {
-    if (!check_positions(&(*l_beg), &(*std::next(l_beg))))
-      stable = false;
+    check_positions(&(*l_beg), &(*std::next(l_beg)));
     l_beg++;
   }
-
-  return stable;
 }
 
 template <template <class> class Cont, class T>
-bool check_overlaps(Cont<node_pos_t<T>> &positions) {
-
-  bool stable = true;
-  if (std::distance(std::begin(positions), std::end(positions)) < 4)
-    return true;
+void check_overlaps(Cont<node_pos_t<T>> &positions) {
 
   for (auto i = positions.begin(); i != std::prev(positions.end()); i++) {
     if (auto next = std::next(i); next->l && (next->level == i->level))
-      stable = check_positions(&(*i), &(*next->l));
+      check_positions(&(*i), &(*next->l));
 
     if (auto next = std::next(i); i->r && (next->level == i->level))
       check_positions(&(*i->r), &(*next));
   }
-
-  return stable;
 }
 
 template <class Node> void Tree<Node>::display(const Node *_root) const {
@@ -179,13 +170,14 @@ template <class Node> void Tree<Node>::display(const Node *_root) const {
 
     node_pos pos = pos_queue.front();
 
+    positions.push_back(pos);
+
     node_pos **child_upd = nullptr;
     if (pos.parent)
       child_upd = (pos.parent->r == &pos_queue.front()) ? &pos.parent->r
                                                         : &pos.parent->l;
     pos_queue.pop();
 
-    positions.push_back(pos);
     if (child_upd)
       *child_upd = &positions.back();
 
@@ -208,26 +200,23 @@ template <class Node> void Tree<Node>::display(const Node *_root) const {
       positions.back().r = &pos_queue.back();
     }
 
-    for (int level = pos.level; level > 0; level--) {
+    for (int level = pos.level; level > 1; level--) {
       check_level(level, positions);
+      check_overlaps(positions);
     }
-    check_overlaps(positions);
   }
 
   for (int level = positions.back().level; level > 0; level--) {
     check_level(level, positions);
-    check_overlaps(positions);
   }
+  check_overlaps(positions);
 
   int min_pos =
       std::min_element(positions.begin(), positions.end(),
                        [](auto &a, auto &b) { return a.position < b.position; })
           ->position;
 
-  for (auto &pos : positions) {
-    pos.position += -min_pos;
-  }
-
+  shift_positions(-min_pos, &positions.front());
   draw(positions);
 }
 
