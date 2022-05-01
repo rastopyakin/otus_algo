@@ -16,7 +16,7 @@ struct Node {
 
   Node(const T &t) : payload{t} {}
   T payload;
-  NodePtr left {nullptr}, right {nullptr};
+  NodePtr left{nullptr}, right{nullptr};
 
   std::string display_str() const { return display_str(payload); };
 
@@ -25,7 +25,7 @@ private:
     return std::to_string(payload);
   }
   std::string display_str(char c) const { return {c}; }
-  const std::string & display_str(const std::string &str) const { return str; }
+  const std::string &display_str(const std::string &str) const { return str; }
 };
 
 template <class Node> class Tree {
@@ -54,30 +54,35 @@ protected:
   std::unique_ptr<Node> root;
 };
 
-// DisplayNode is the same tree node with additional info: level, position,
-// parent, and not owning pointers
+// DisplayNode is the same tree node with additional info: level, position, parent, and
+// not owning pointers
 
-// shift_positions(): shifts positions of all children of a given root
+// shift_positions(): shifts positions of all children of a given subtree
 
-// check_positions(): if to nodes overlap then shift them accordingly with the
-// containing subtree
+// check_positions(): if to nodes overlap then shift them accordingly with the containing
+// subtree, so they will have enough space between them
 
 // check_level(): checks all neigbour pair on a given level
 
-// display(): basically builds the tree with all additional info as it is in DisplayNode,
-// then checks neigbours on all tree's levels and overlaps between a node and its
-// neigbour's child, which would make the tree arcs impossible to draw
+// check_overlaps(): checks overlaps between a node and its neigbour's child, which would
+// make the tree arcs impossible to draw
 
-// display() stores the nodes in a list, because (i) linear container makes the check
-// easier to implement and (ii) list never reallocates
+// display(): basically builds the tree with all additional info as it is in DisplayNode,
+// checks the space between
+
+// display() stores the nodes in a list, because (i) linear container makes the
+// checks easier to implement and (ii) list never reallocates
 
 template <class T>
 struct DisplayNode : public Node<T, DisplayNode<T>, DisplayNode<T> *> {
   using Base = Node<T, DisplayNode<T>, DisplayNode<T> *>;
+
   DisplayNode(const T &pld) : Base{pld} {}
+  const std::string & display_str() const { return string; };
   int level = 0;
   int position = 0;
   DisplayNode *parent = nullptr;
+  std::string string;
 };
 
 template <class T> void shift_positions(int shift, DisplayNode<T> *root) {
@@ -158,6 +163,7 @@ template <class Node> void Tree<Node>::display(const Node *_root) const {
 
   std::queue<node_pos> pos_queue;
   pos_queue.push(node_pos{_root->payload});
+  pos_queue.back().string = _root->display_str();
 
   while (!nodes.empty()) {
     const Node *node = nodes.front();
@@ -180,8 +186,9 @@ template <class Node> void Tree<Node>::display(const Node *_root) const {
       nodes.push(node->left.get());
       pos_queue.push(node_pos{node->left->payload});
       pos_queue.back().level = pos.level + 1;
-      pos_queue.back().position = pos.position - 1 - node_width(*node->left);
+      pos_queue.back().position = pos.position  - node_width(*node->left);
       pos_queue.back().parent = &positions.back();
+      pos_queue.back().string = node->left->display_str();
       positions.back().left = &pos_queue.back();
     }
 
@@ -189,8 +196,9 @@ template <class Node> void Tree<Node>::display(const Node *_root) const {
       nodes.push(node->right.get());
       pos_queue.push(node_pos{node->right->payload});
       pos_queue.back().level = pos.level + 1;
-      pos_queue.back().position = pos.position + 1 + node_width(*node);
+      pos_queue.back().position = pos.position + node_width(*node);
       pos_queue.back().parent = &positions.back();
+      pos_queue.back().string = node->right->display_str();
       positions.back().right = &pos_queue.back();
     }
 
@@ -218,13 +226,13 @@ template <template <class> class Cont, class T>
 void draw(const Cont<DisplayNode<T>> &positions) {
   int level = positions.front().level;
 
-  std::string nodes, edges;
+  std::string nodes, arcs;
 
   for (const auto &pos : positions) {
     if (level != pos.level) {
-      std::cout << nodes << "\n" << edges << "\n";
+      std::cout << nodes << "\n" << arcs << "\n";
       nodes.clear();
-      edges.clear();
+      arcs.clear();
       level = pos.level;
     }
 
@@ -233,10 +241,10 @@ void draw(const Cont<DisplayNode<T>> &positions) {
     std::string pld_str = pos.display_str();
 
     if (pos.left) {
-      int ed_pos = pos.left->position + node_width(*pos.left) / 2 + 1;
-      lines = pos.position - ed_pos - 1;
+      int arc_pos = pos.left->position + node_width(*pos.left) / 2;
+      lines = pos.position - arc_pos - 1;
       spaces -= lines;
-      edges += std::string(ed_pos - edges.length(), ' ') + '/';
+      arcs += std::string(arc_pos - arcs.length(), ' ') + '/';
     }
 
     nodes += std::string(spaces, ' ');
@@ -244,10 +252,10 @@ void draw(const Cont<DisplayNode<T>> &positions) {
     nodes += pld_str;
 
     if (pos.right) {
-      int ed_pos = pos.right->position + node_width(*pos.right) / 2 - 1;
-      lines = ed_pos - nodes.length();
+      int arc_pos = pos.right->position + node_width(*pos.right) / 2;
+      lines = arc_pos - nodes.length();
       nodes += std::string(lines, '_');
-      edges += std::string(ed_pos - edges.length(), ' ') + '\\';
+      arcs += std::string(arc_pos - arcs.length(), ' ') + '\\';
     }
   }
   std::cout << nodes;

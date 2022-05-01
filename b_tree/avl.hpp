@@ -6,12 +6,18 @@
 #include <iostream>
 #include <memory>
 #include <stack>
+#include <string>
 #include <utility>
 
 template <class T>
 struct AVLNode : public Node<T, AVLNode<T>> {
-  AVLNode(const T &t, uint h = 1) : Node<T, AVLNode>{t}, height{h} {}
+  using Base = Node<T, AVLNode>;
+  AVLNode(const T &t, uint h = 1) : Base {t}, height{h} {}
   uint height;
+  std::string display_str() const {
+    std::string height_str = "(" + std::to_string(height) + ")";
+    return Base::display_str() + height_str;
+  }
 };
 
 template <class T> class AVLTree : public Tree<AVLNode<T>> {
