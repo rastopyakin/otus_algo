@@ -1,9 +1,9 @@
-#include "tree.hpp"
+#include "display.hpp"
 
 #include <iostream>
 
 void shift_positions(int shift, DisplayNode *root) {
-  // shifts positions of all children of a given subtree
+
   root->position += shift;
   if (root->left)
     shift_positions(shift, root->left);
@@ -11,8 +11,7 @@ void shift_positions(int shift, DisplayNode *root) {
     shift_positions(shift, root->right);
 }
 void check_positions(DisplayNode &p_l, DisplayNode &p_r) {
-  // if to nodes overlap then shift them accordingly with the containing
-  // subtree, so they will have enough space between them
+
   bool need_fix = p_r.position <= p_l.position + node_width(p_l);
   if (need_fix) {
 
@@ -34,7 +33,6 @@ void check_positions(DisplayNode &p_l, DisplayNode &p_r) {
   }
 }
 void check_level(int level, std::list<DisplayNode> &positions) {
-  // checks the postions of all neigbouring nodes on a given level
 
   auto is_lvl = [level](auto &pos) { return pos.level == level; };
 
@@ -49,8 +47,6 @@ void check_level(int level, std::list<DisplayNode> &positions) {
   }
 }
 void check_overlaps(std::list<DisplayNode> &positions) {
-  // checks overlap between a node and its neigbour's child, which would make
-  // the tree arcs impossible to draw
 
   for (auto i = positions.begin(); i != std::prev(positions.end()); i++) {
     if (auto next = std::next(i); next->left && (next->level == i->level))

@@ -17,10 +17,10 @@ add_executable(avl_tree avl.cpp)
 target_include_directories(avl_tree PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_features(avl_tree PRIVATE cxx_std_17)
 
-add_executable(avl_visual avl_visual.cpp tree.cpp)
+add_executable(avl_visual avl_visual.cpp display.cpp)
 target_include_directories(avl_visual PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_features(avl_visual PRIVATE cxx_std_17)
 
-add_executable(avl_vs_bst avl_vs_bst.cpp tree.cpp)
+add_executable(avl_vs_bst avl_vs_bst.cpp display.cpp)
 target_include_directories(avl_vs_bst PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_features(avl_vs_bst PRIVATE cxx_std_17)
