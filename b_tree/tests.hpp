@@ -1,6 +1,7 @@
 #ifndef TESTS_HPP
 #define TESTS_HPP
 
+#include <type_traits>
 #include <vector>
 #include <random>
 #include <ctime>
@@ -30,6 +31,15 @@ make_random_tree(int n_elem, std::uniform_int_distribution<int> d) {
   return {std::move(tree), elems};
 }
 
+template <class Tree, class U = int>
+struct has_check_heights : std::false_type {};
+
+template <class Tree>
+struct has_check_heights<Tree, decltype(Tree{}.check_heights(), int{})> : std::true_type {};
+
+template <class Tree>
+constexpr bool has_check_heights_v = has_check_heights<Tree>::value;
+
 template <template<class> class Tree>
 void search_test() {
 
@@ -39,6 +49,11 @@ void search_test() {
   const int n_elem = 1e5;
   std::uniform_int_distribution<int> d{};
   auto [tree, elems] = make_random_tree<Tree>(n_elem, d);
+
+  if constexpr (has_check_heights_v<Tree<int>>) {
+    tree.check_heights();
+  }
+
   // check obviously inserted
   for (auto e : elems)
     if (!tree.search(e)) {
@@ -80,9 +95,8 @@ void remove_test() {
 
   std::vector<int> removed;
 
-
   auto predicate = [n = 0, &removed](auto e) mutable {
-    bool if_removed = n++ % 10 == 0;
+    bool if_removed = n++ % 5 == 0;
     if (if_removed)
       removed.push_back(e);
     return if_removed;
@@ -92,6 +106,10 @@ void remove_test() {
 
   for (int e : removed)
     tree.remove(e);
+
+  if constexpr (has_check_heights_v<Tree<int>>) {
+    tree.check_heights();
+  }
 
   for (int e : elems)
     if (!tree.search(e)) {
