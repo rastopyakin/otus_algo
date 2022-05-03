@@ -11,10 +11,8 @@
 
 int main(int argc, char *argv[]) {
 
-  // remove_visual_test<AVLTree>(20);
   search_test<AVLTree>();
   remove_test<AVLTree>();
-  // display_test<AVLTree>();
-  // display_test<BSTree>();
+
   return 0;
 }

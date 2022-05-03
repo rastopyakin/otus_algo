@@ -22,20 +22,20 @@ struct AVLNode : public Node<T, AVLNode<T>> {
 
 template <class T> class AVLTree : public Tree<AVLNode<T>> {
 
-  using node_t = AVLNode<T>;
-  using Tree<node_t>::root;
+  using node_type = AVLNode<T>;
+  using Tree<node_type>::root;
 
 public:
   void insert(T t) { insert(t, root); }
   void remove(T t) { remove(t, root); }
 
-  using Tree<node_t>::display;
-  using Tree<node_t>::search;
+  using Tree<node_type>::display;
+  using Tree<node_type>::search;
 
   void check_heights() const { check_heights(root); }
 
 private:
-  void smallLeftRotation(std::unique_ptr<node_t> &_root) {
+  void smallLeftRotation(std::unique_ptr<node_type> &_root) {
     auto pivot = std::move(_root->right);
 
     _root->right = std::move(pivot->left);
@@ -48,7 +48,7 @@ private:
     _root->height = std::max(height(_root->left), height(_root->right)) + 1;
   }
 
-  void smallRightRotation(std::unique_ptr<node_t> &_root) {
+  void smallRightRotation(std::unique_ptr<node_type> &_root) {
     auto pivot = std::move(_root->left);
 
     _root->left = std::move(pivot->right);
@@ -61,20 +61,20 @@ private:
     _root->height = std::max(height(_root->left), height(_root->right)) + 1;
   }
 
-  void bigLeftRotation(std::unique_ptr<node_t> &_root) {
+  void bigLeftRotation(std::unique_ptr<node_type> &_root) {
     smallRightRotation(_root->right);
     smallLeftRotation(_root);
   }
-  void bigRightRotation(std::unique_ptr<node_t> &_root) {
+  void bigRightRotation(std::unique_ptr<node_type> &_root) {
     smallLeftRotation(_root->left);
     smallRightRotation(_root);
   }
 
-  int height(const std::unique_ptr<node_t> &_node) const {
+  int height(const std::unique_ptr<node_type> &_node) const {
     return _node ? _node->height : 0;
   }
 
-  void keep_balance(std::unique_ptr<node_t> &_root) {
+  void rebalance(std::unique_ptr<node_type> &_root) {
 
     if (height(_root->right) > height(_root->left) + 1) {
       if (height(_root->right->right) >= height(_root->right->left))
@@ -93,19 +93,19 @@ private:
     _root->height = std::max(height(_root->left), height(_root->right)) + 1;
   }
 
-  void insert(T t, std::unique_ptr<node_t> &_root) {
+  void insert(T t, std::unique_ptr<node_type> &_root) {
     if (!_root)
-      _root = std::make_unique<node_t>(t);
+      _root = std::make_unique<node_type>(t);
     if (t < _root->payload) {
       insert(t, _root->left);
     } else if (t > _root->payload) {
       insert(t, _root->right);
     }
 
-    keep_balance(_root);
+    rebalance(_root);
   }
 
-  void remove(T t, std::unique_ptr<node_t> &_root) {
+  void remove(T t, std::unique_ptr<node_type> &_root) {
     if (!_root)
       return;
 
@@ -118,18 +118,18 @@ private:
     }
 
     if (_root)
-      keep_balance(_root);
+      rebalance(_root);
   }
 
-  void remove_node(std::unique_ptr<node_t> &node) {
+  void remove_node(std::unique_ptr<node_type> &node) {
     if (!node->left || !node->right) {
       auto &child = node->left ? node->left : node->right;
       node = std::move(child);
       return;
     }
 
-    std::unique_ptr<node_t> *min_in_right = &node->right;
-    std::stack<std::unique_ptr<node_t>*> parents_to_balance;
+    std::unique_ptr<node_type> *min_in_right = &node->right;
+    std::stack<std::unique_ptr<node_type>*> parents_to_balance;
     parents_to_balance.push(min_in_right);
 
     while ((*min_in_right)->left) {
@@ -145,12 +145,12 @@ private:
     parents_to_balance.pop();
 
     while (!parents_to_balance.empty()) {
-      keep_balance(*parents_to_balance.top());
+      rebalance(*parents_to_balance.top());
       parents_to_balance.pop();
     }
   }
 
-  void check_heights(const std::unique_ptr<node_t> &_root) const {
+  void check_heights(const std::unique_ptr<node_type> &_root) const {
     if (!_root)
       return;
     check_heights(_root->left);
