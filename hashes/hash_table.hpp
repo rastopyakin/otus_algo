@@ -64,7 +64,10 @@ class HashTableIterator {
 
 public:
   using value_type = typename _hash_table::value_type;
-  using iterator_category = std::forward_iterator_tag;
+  using difference_type = typename _local_iterator::difference_type;
+  using reference = value_type&;
+  using pointer = value_type*;
+  using iterator_category = typename _local_iterator::iterator_category;
   // bla-bla
 
 public:
@@ -122,7 +125,6 @@ public:
   using key_type = typename node_type::key_type;
   using mapped_type = typename node_type::mapped_type;
 
-  // TODO: this won't work: how to iterate over the whole table?
   using iterator = HashTableIterator<Key, Value, RehashPolicy, Hash, Equal>;
   friend iterator;
   using size_type = typename bucket_type::size_type;
