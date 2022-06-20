@@ -14,7 +14,8 @@
 
 using Key = std::string;
 using Value = int;
-using Reference_HT = std::unordered_map<Key, Value>; // just use standart implementation for tests
+using Reference_HT =
+    std::unordered_map<Key, Value>; // just use standart implementation for some tests
 
 using KV_Pair = std::pair<Key, Value>; // don't need const on Key type for testing purposes
 
@@ -139,7 +140,7 @@ template <template <class, class> class HT> void operator_access_test(std::size_
   HT<Key, Value> tested_table;
   Reference_HT ref_table;
 
-  const std::size_t n_elm_w_value = n_elem/2; // number elems to assign immediately
+  const std::size_t n_elm_w_value = n_elem / 2; // number elems to assign immediately
   auto elm_w_value_end = pairs_to_insert.begin() + n_elm_w_value;
 
   auto pred_less = [](const auto &p1, const auto &p2) -> bool { return p1.first < p2.first; };
@@ -158,7 +159,7 @@ template <template <class, class> class HT> void operator_access_test(std::size_
 
   // exclude unique keys leaving the last inserted therefore we iterate in reverse
   auto rev_last_unique =
-    std::unique(std::reverse_iterator{elm_w_value_end}, pairs_to_insert.rend(), pred_compare);
+      std::unique(std::reverse_iterator{elm_w_value_end}, pairs_to_insert.rend(), pred_compare);
 
   passed = std::equal(inserted_pairs.begin(), inserted_pairs.end(), rev_last_unique.base());
 
