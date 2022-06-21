@@ -185,6 +185,22 @@ template <template <class, class> class HT> void operator_access_test(std::size_
       i->second = default_value; // for the purpose of subsequent comparison
   }
 
-  report(passed);
+  // final lookup!
+
+  auto begin = rev_last_unique.base(); // positions below that are duplicates
+
+  std::stable_sort(begin, pairs_to_insert.end(), pred_less);
+  // exclude the duplicates found in previous check, forward order this time
+  auto last_unique = std::unique(begin, pairs_to_insert.end(), pred_compare);
+
+  for (auto i = begin; i != last_unique; i++)
+    if (tested_table[i->first] != i->second) {
+      report(false);
+      std::cout << "the final lookup failed\n";
+      return;
+    }
+
+  report(true);
+}
 }
 #endif /* TEST_HPP */
