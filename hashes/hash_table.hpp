@@ -4,11 +4,10 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <list>
 #include <forward_list>
 #include <functional>
-#include <iostream>
 #include <iterator>
-#include <list>
 #include <utility>
 #include <vector>
 
@@ -57,8 +56,9 @@ template <class Key, class Value> struct HashTableNode {
 template <class Key, class Value, class RehashPolicy, class Hash, class Equal> class HashTable_impl;
 
 template <class Key, class Value, class RehashPolicy, class Hash, class Equal>
-class HashTableIterator {
+class HashTableIterator_v0 {
   using _hash_table = HashTable_impl<Key, Value, RehashPolicy, Hash, Equal>;
+  friend _hash_table;
   using _local_iterator = typename _hash_table::_local_iterator;
   using _size_type = typename _hash_table::size_type;
 
@@ -71,13 +71,13 @@ public:
   // bla-bla
 
 public:
-  HashTableIterator(_hash_table *ht, _local_iterator curr_node, _size_type curr_bkt)
+  HashTableIterator_v0(_hash_table *ht, _local_iterator curr_node, _size_type curr_bkt)
       : _ht(ht), _curr{curr_node}, _curr_bkt(curr_bkt) {}
 
   value_type &operator*() { return _curr->_kv_pair; }
   value_type *operator->() { return &(_curr->_kv_pair); }
 
-  HashTableIterator operator++() {
+  HashTableIterator_v0 operator++() {
     _curr++;
 
     if (_curr == _ht->_buckets[_curr_bkt].end()) {
@@ -99,14 +99,14 @@ public:
     return *this;
   }
 
-  HashTableIterator operator++(int) {
+  HashTableIterator_v0 operator++(int) {
     auto tmp{*this};
     this->operator++();
     return tmp;
   }
 
-  bool operator==(const HashTableIterator &other) { return _curr == other._curr; }
-  bool operator!=(const HashTableIterator &other) { return _curr != other._curr; }
+  bool operator==(const HashTableIterator_v0 &other) { return _curr == other._curr; }
+  bool operator!=(const HashTableIterator_v0 &other) { return _curr != other._curr; }
 
 private:
   _hash_table *_ht;
@@ -119,13 +119,13 @@ class HashTable_impl {
 public:
   using node_type = HashTableNode<Key, Value>;
   using value_type = typename node_type::value_type;
-  using bucket_type = std::forward_list<node_type>;
+  using bucket_type = std::list<node_type>;
   using _local_iterator = typename bucket_type::iterator;
 
   using key_type = typename node_type::key_type;
   using mapped_type = typename node_type::mapped_type;
 
-  using iterator = HashTableIterator<Key, Value, RehashPolicy, Hash, Equal>;
+  using iterator = HashTableIterator_v0<Key, Value, RehashPolicy, Hash, Equal>;
   friend iterator;
   using size_type = typename bucket_type::size_type;
 
@@ -147,7 +147,7 @@ public:
   size_type size() const { return _count; }
   size_type bucket_count() const { return _buckets.size(); }
   const bucket_type &bucket(size_type bkt_n) { return _buckets[bkt_n]; }
-  // size_type bucket_size(size_type n) const { return _buckets[n].size(); }
+  size_type bucket_size(size_type n) const { return _buckets[n].size(); }
   float max_load_factor() const { return _rehash_pol.max_load_factor(); }
   float load_factor() const {
     return static_cast<float>(size()) / static_cast<float>(bucket_count());
@@ -162,8 +162,6 @@ public:
     if (auto [need_rehash, n_bkt_new] = _rehash_pol.need_rehash(bucket_count(), size(), 1);
         need_rehash) {
       rehash(n_bkt_new);
-      // std::cout << "rehashed to " << n_bkt_new << " buckets, ";
-      // std::cout << "load factor : " << load_factor() << "\n";
     }
 
     std::size_t hash = _hash(k);
@@ -196,6 +194,20 @@ public:
   }
 
   const mapped_type &operator[](const key_type &key) const; // not implemented
+
+  bool erase(const Key &k) {
+    iterator pos = find(k);
+    if (pos == end())
+      return false;
+
+    erase(pos);
+    return true;
+  }
+
+  void erase(iterator pos) {
+    _buckets[pos._curr_bkt].erase(pos._curr);
+    --_count;
+  }
 
   iterator find(const key_type &k) {
     std::size_t hash = _hash(k);

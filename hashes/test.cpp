@@ -28,3 +28,9 @@ std::vector<KV_Pair> make_test_insertions(std::size_t n_elem, std::size_t str_le
 
   return result;
 }
+
+std::ostream &operator<<(std::ostream &os, const KV_Pair &kvp) {
+
+  os << kvp.first << "->" << kvp.second;
+  return os;
+}
