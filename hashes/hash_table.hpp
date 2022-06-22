@@ -79,17 +79,10 @@ public:
   HashTableIterator operator++() {
     _curr++;
 
-    if (_curr == _bkt->end()) {
+    while (_bkt != _bkt_end && _curr == _bkt->end()) {
       _bkt++;
-
       if (_bkt != _bkt_end)
         _curr = _bkt->begin();
-
-      while (_bkt != _bkt_end && _bkt->empty()) {
-        _bkt++;
-        if (_bkt != _bkt_end)
-          _curr = _bkt->begin();
-      }
     }
 
     return *this;
@@ -221,15 +214,17 @@ public:
     return end();
   }
 
-  iterator end() { return iterator{_buckets.end() - 1, _buckets.end(), _buckets.back().end()}; }
+  iterator end() { return iterator{_buckets.end(), _buckets.end(), _buckets.back().end()}; }
   iterator begin() {
     _buckets_iterator bkt = _buckets.begin();
-    _buckets_iterator last = _buckets.end() - 1;
 
-    while (bkt != last && bkt->empty())
+    while (bkt != _buckets.end() && bkt->empty())
       bkt++;
 
-    return iterator{bkt, _buckets.end(), bkt->begin()};
+    if (bkt != _buckets.end())
+      return iterator{bkt, _buckets.end(), bkt->begin()};
+
+    return end();
   }
 
 private:
