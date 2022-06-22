@@ -57,11 +57,11 @@ public:
 
   template <class K, class V>
   HashTableNode(K &&k, V &&v, std::size_t hash)
-      : _node_base {std::forward<K>(k), std::forward<V>(v)}, _cached_hash(hash) {}
+      : _node_base{std::forward<K>(k), std::forward<V>(v)}, _cached_hash(hash) {}
   HashTableNode(const HashTableNode &) = default;
   HashTableNode(HashTableNode &&) noexcept = default;
 
-  std::size_t hash() const {return _cached_hash;}
+  std::size_t hash() const { return _cached_hash; }
 
 private:
   std::size_t _cached_hash;
@@ -134,7 +134,7 @@ public:
   using size_type = typename bucket_type::size_type;
 
 public:
-  HashTable_impl() : _buckets{}, _count(0), _rehash_pol(1.0), _hash(), _eq() {
+  HashTable_impl(float max_lf = 1.0) : _buckets{}, _count(0), _rehash_pol(max_lf), _hash(), _eq() {
     _buckets.emplace_back(); // let's have at least one bucket in the beginning to avoid checking
                              // division by zero upon hash constraining and for keeping consistency
   }
@@ -153,6 +153,7 @@ public:
   const bucket_type &bucket(size_type bkt_n) { return _buckets[bkt_n]; }
   size_type bucket_size(size_type n) const { return _buckets[n].size(); }
   float max_load_factor() const { return _rehash_pol.max_load_factor(); }
+
   float load_factor() const {
     return static_cast<float>(size()) / static_cast<float>(bucket_count());
   }
@@ -192,6 +193,7 @@ public:
     size_type bkt = constrain_hash(hash, bucket_count());
     bucket_type &bucket = _buckets[bkt];
 
+    // TODO: piecewise construct the node??
     bucket.emplace_front(key, mapped_type{}, hash);
     _count++;
     return bucket.front().value();
@@ -226,8 +228,8 @@ public:
     return end();
   }
 
-  iterator end() { return iterator{_buckets.end(), _buckets.end(), _buckets.back().end()}; }
-  iterator begin() {
+  iterator end() noexcept { return iterator{_buckets.end(), _buckets.end(), _buckets.back().end()}; }
+  iterator begin() noexcept {
     _buckets_iterator bkt = _buckets.begin();
 
     while (bkt != _buckets.end() && bkt->empty())
@@ -261,6 +263,14 @@ private:
 
 template <class Key, class Value>
 class HashTable
-    : public HashTable_impl<Key, Value, SimpleRehashPolicy, std::hash<Key>, std::equal_to<Key>> {};
+    : public HashTable_impl<Key, Value, SimpleRehashPolicy, std::hash<Key>, std::equal_to<Key>> {
+
+  using _base = HashTable_impl<Key, Value, SimpleRehashPolicy, std::hash<Key>, std::equal_to<Key>>;
+
+public:
+  template <class ... Args>
+  HashTable(Args... args) : _base{args...} {}
+
+};
 
 #endif /* HASH_TABLE_HPP */
