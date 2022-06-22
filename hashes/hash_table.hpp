@@ -52,12 +52,11 @@ template <class Key, class Value> struct HashTableNode {
   std::size_t _cached_hash;
 };
 
-template <class Key, class Value, class RehashPolicy, class Hash, class Equal> class HashTable_impl;
-
-template <class Key, class Value, class RehashPolicy, class Hash, class Equal>
+template <class HT>
 class HashTableIterator {
-  using _hash_table = HashTable_impl<Key, Value, RehashPolicy, Hash, Equal>;
+  using _hash_table = HT;
   friend _hash_table;
+
   using _local_iterator = typename _hash_table::_local_iterator;
   using _buckets_iterator = typename _hash_table::_buckets_iterator;
 
@@ -117,7 +116,7 @@ public:
   using key_type = typename node_type::key_type;
   using mapped_type = typename node_type::mapped_type;
 
-  using iterator = HashTableIterator<Key, Value, RehashPolicy, Hash, Equal>;
+  using iterator = HashTableIterator<HashTable_impl>;
   using size_type = typename bucket_type::size_type;
 
 public:
@@ -162,7 +161,6 @@ public:
     bucket.emplace_front(std::forward<K>(k), std::forward<V>(v), hash);
     _count++;
 
-    // return {iterator{this, bucket.begin(), bkt}, true};
     return {iterator{_buckets.begin() + bkt, _buckets.end(), bucket.begin()}, true};
   }
 
