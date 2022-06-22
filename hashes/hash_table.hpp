@@ -4,10 +4,9 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <list>
-#include <forward_list>
 #include <functional>
 #include <iterator>
+#include <list>
 #include <utility>
 #include <vector>
 
@@ -56,62 +55,60 @@ template <class Key, class Value> struct HashTableNode {
 template <class Key, class Value, class RehashPolicy, class Hash, class Equal> class HashTable_impl;
 
 template <class Key, class Value, class RehashPolicy, class Hash, class Equal>
-class HashTableIterator_v0 {
+class HashTableIterator {
   using _hash_table = HashTable_impl<Key, Value, RehashPolicy, Hash, Equal>;
   friend _hash_table;
   using _local_iterator = typename _hash_table::_local_iterator;
-  using _size_type = typename _hash_table::size_type;
+  using _buckets_iterator = typename _hash_table::_buckets_iterator;
 
 public:
   using value_type = typename _hash_table::value_type;
   using difference_type = typename _local_iterator::difference_type;
-  using reference = value_type&;
-  using pointer = value_type*;
+  using reference = value_type &;
+  using pointer = value_type *;
   using iterator_category = typename _local_iterator::iterator_category;
   // bla-bla
 
 public:
-  HashTableIterator_v0(_hash_table *ht, _local_iterator curr_node, _size_type curr_bkt)
-      : _ht(ht), _curr{curr_node}, _curr_bkt(curr_bkt) {}
+  HashTableIterator(_buckets_iterator bkt, _buckets_iterator bkt_end, _local_iterator curr)
+      : _bkt(bkt), _bkt_end(bkt_end), _curr(curr) {}
 
   value_type &operator*() { return _curr->_kv_pair; }
   value_type *operator->() { return &(_curr->_kv_pair); }
 
-  HashTableIterator_v0 operator++() {
+  HashTableIterator operator++() {
     _curr++;
 
-    if (_curr == _ht->_buckets[_curr_bkt].end()) {
+    if (_curr == _bkt->end()) {
+      _bkt++;
 
-      if (_curr_bkt < _ht->bucket_count() - 1) {
-        _curr_bkt++;
-        _curr = _ht->_buckets[_curr_bkt].begin();
+      if (_bkt != _bkt_end)
+        _curr = _bkt->begin();
+
+      while (_bkt != _bkt_end && _bkt->empty()) {
+        _bkt++;
+        if (_bkt != _bkt_end)
+          _curr = _bkt->begin();
       }
-
-      while (_ht->_buckets[_curr_bkt].empty() && _curr_bkt < _ht->bucket_count()) {
-        _curr_bkt++;
-        if (_curr_bkt < _ht->bucket_count())
-          _curr = _ht->_buckets[_curr_bkt].begin();
-      }
-
-      return *this;
     }
 
     return *this;
   }
 
-  HashTableIterator_v0 operator++(int) {
+  HashTableIterator operator++(int) {
     auto tmp{*this};
     this->operator++();
     return tmp;
   }
 
-  bool operator==(const HashTableIterator_v0 &other) { return _curr == other._curr; }
-  bool operator!=(const HashTableIterator_v0 &other) { return _curr != other._curr; }
+  bool operator==(const HashTableIterator &other) { return _curr == other._curr; }
+  bool operator!=(const HashTableIterator &other) { return _curr != other._curr; }
 
 private:
-  _hash_table *_ht;
+  _buckets_iterator _bkt;
+  _buckets_iterator _bkt_end;
+
   _local_iterator _curr;
-  _size_type _curr_bkt;
 };
 
 template <class Key, class Value, class RehashPolicy, class Hash, class Equal>
@@ -120,13 +117,14 @@ public:
   using node_type = HashTableNode<Key, Value>;
   using value_type = typename node_type::value_type;
   using bucket_type = std::list<node_type>;
+  using bucket_array_type = std::vector<bucket_type>;
   using _local_iterator = typename bucket_type::iterator;
+  using _buckets_iterator = typename bucket_array_type::iterator;
 
   using key_type = typename node_type::key_type;
   using mapped_type = typename node_type::mapped_type;
 
-  using iterator = HashTableIterator_v0<Key, Value, RehashPolicy, Hash, Equal>;
-  friend iterator;
+  using iterator = HashTableIterator<Key, Value, RehashPolicy, Hash, Equal>;
   using size_type = typename bucket_type::size_type;
 
 public:
@@ -171,7 +169,8 @@ public:
     bucket.emplace_front(std::forward<K>(k), std::forward<V>(v), hash);
     _count++;
 
-    return {iterator{this, bucket.begin(), bkt}, true};
+    // return {iterator{this, bucket.begin(), bkt}, true};
+    return {iterator{_buckets.begin() + bkt, _buckets.end(), bucket.begin()}, true};
   }
 
   mapped_type &operator[](const key_type &key) {
@@ -205,7 +204,7 @@ public:
   }
 
   void erase(iterator pos) {
-    _buckets[pos._curr_bkt].erase(pos._curr);
+    pos._bkt->erase(pos._curr);
     --_count;
   }
 
@@ -214,21 +213,23 @@ public:
     size_type bkt = constrain_hash(hash, bucket_count());
     bucket_type &bucket = _buckets[bkt];
 
-    for (_local_iterator i = bucket.begin(); i != bucket.end(); i++)
-      if (hash == i->_cached_hash)
-        if (_eq(i->key(), k))
-          return iterator{this, i, bkt};
+    for (_local_iterator pos = bucket.begin(); pos != bucket.end(); pos++)
+      if (hash == pos->_cached_hash)
+        if (_eq(pos->key(), k))
+          return iterator{_buckets.begin() + bkt, _buckets.end(), pos};
 
     return end();
   }
 
-  iterator end() { return iterator{this, _buckets.back().end(), bucket_count() - 1}; }
+  iterator end() { return iterator{_buckets.end() - 1, _buckets.end(), _buckets.back().end()}; }
   iterator begin() {
-    size_type bkt = 0;
-    while (_buckets[bkt].empty() && bkt < bucket_count() - 1) {
+    _buckets_iterator bkt = _buckets.begin();
+    _buckets_iterator last = _buckets.end() - 1;
+
+    while (bkt != last && bkt->empty())
       bkt++;
-    }
-    return iterator{this, _buckets[bkt].begin(), bkt};
+
+    return iterator{bkt, _buckets.end(), bkt->begin()};
   }
 
 private:
@@ -243,7 +244,7 @@ private:
   using equal_pred = Equal;
 
 private:
-  std::vector<bucket_type> _buckets;
+  bucket_array_type _buckets;
   size_type _count;
 
   rehash_policy _rehash_pol;
