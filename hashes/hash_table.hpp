@@ -7,6 +7,7 @@
 #include <functional>
 #include <iterator>
 #include <list>
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -33,27 +34,40 @@ struct SimpleRehashPolicy {
 
 struct PrimeRehashPolicy {};
 
-template <class Key, class Value> struct HashTableNode {
+template <class Key, class Value> struct HashTableNodeBase : public std::pair<const Key, Value> {
   using value_type = std::pair<const Key, Value>;
-  using key_type = Key;
+  using key_type = const Key;
   using mapped_type = Value;
 
   template <class K, class V>
+  HashTableNodeBase(K &&k, V &&v) : value_type{std::forward<K>(k), std::forward<V>(v)} {}
+  // TODO: what about piecewise construction?
+
+  HashTableNodeBase(const HashTableNodeBase &) = default;
+  HashTableNodeBase(HashTableNodeBase &&) noexcept = default;
+
+  mapped_type &value() noexcept { return this->second; }
+  const mapped_type &value() const noexcept { return this->second; }
+  const key_type &key() const noexcept { return this->first; }
+};
+
+template <class Key, class Value> class HashTableNode : public HashTableNodeBase<Key, Value> {
+public:
+  using _node_base = HashTableNodeBase<Key, Value>;
+
+  template <class K, class V>
   HashTableNode(K &&k, V &&v, std::size_t hash)
-      : _kv_pair{std::forward<K>(k), std::forward<V>(v)}, _cached_hash(hash) {}
+      : _node_base {std::forward<K>(k), std::forward<V>(v)}, _cached_hash(hash) {}
   HashTableNode(const HashTableNode &) = default;
   HashTableNode(HashTableNode &&) noexcept = default;
 
-  mapped_type &value() { return _kv_pair.second; }
-  const mapped_type &value() const { return _kv_pair.second; }
-  const key_type &key() const { return _kv_pair.first; }
+  std::size_t hash() const {return _cached_hash;}
 
-  value_type _kv_pair;
+private:
   std::size_t _cached_hash;
 };
 
-template <class HT>
-class HashTableIterator {
+template <class HT> class HashTableIterator {
   using _hash_table = HT;
   friend _hash_table;
 
@@ -72,8 +86,8 @@ public:
   HashTableIterator(_buckets_iterator bkt, _buckets_iterator bkt_end, _local_iterator curr)
       : _bkt(bkt), _bkt_end(bkt_end), _curr(curr) {}
 
-  value_type &operator*() { return _curr->_kv_pair; }
-  value_type *operator->() { return &(_curr->_kv_pair); }
+  value_type &operator*() { return *_curr; }
+  value_type *operator->() { return std::addressof(*_curr); }
 
   HashTableIterator operator++() {
     _curr++;
@@ -145,7 +159,7 @@ public:
 
   template <class K, class V> std::pair<iterator, bool> insert_or_assign(K &&k, V &&v) {
     if (iterator i = find(k); i != end()) {
-      i->second = v;
+      i._curr->value() = v;
       return {i, false};
     }
 
@@ -166,7 +180,7 @@ public:
 
   mapped_type &operator[](const key_type &key) {
     if (iterator i = find(key); i != end()) {
-      return i->second;
+      return i._curr->value();
     }
 
     if (auto [need_rehash, n_bkt_new] = _rehash_pol.need_rehash(bucket_count(), size(), 1);
@@ -205,7 +219,7 @@ public:
     bucket_type &bucket = _buckets[bkt];
 
     for (_local_iterator pos = bucket.begin(); pos != bucket.end(); pos++)
-      if (hash == pos->_cached_hash)
+      if (hash == pos->hash())
         if (_eq(pos->key(), k))
           return iterator{_buckets.begin() + bkt, _buckets.end(), pos};
 
@@ -227,7 +241,7 @@ public:
 
 private:
   void insert(node_type &&node) {
-    bucket_type &bucket = _buckets[constrain_hash(node._cached_hash, bucket_count())];
+    bucket_type &bucket = _buckets[constrain_hash(node.hash(), bucket_count())];
 
     bucket.emplace_front(std::move(node));
   }
