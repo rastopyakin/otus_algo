@@ -100,11 +100,17 @@ template <template <class, class> class HT> void insert_test(std::size_t n_elem 
 // check the iterating : each inserted key should be accessible and no more than once
 template <template <class, class> class HT>
 void iterator_test(std::size_t n_elem =
-                       50'000 /* we wanna some duplicates so make the default value big enough*/) {
+                   50'000 /* we wanna some duplicates so make the default value big enough*/) {
 
   bool passed = true;
   std::vector<KV_Pair> pairs_to_insert{make_test_insertions(n_elem)};
   HT<Key, Value> tested_table;
+
+  if (tested_table.begin() != tested_table.end()) {
+    report(false);
+    std::cout << ".begin() != .end() in empty table\n";
+    return;
+  }
 
   for (const auto &[s, n] : pairs_to_insert) {
     tested_table.insert_or_assign(s, n);
@@ -125,7 +131,7 @@ void iterator_test(std::size_t n_elem =
 
   // exclude unique keys leaving the last inserted therefore we iterate in reverse
   auto rev_last_unique =
-      std::unique(pairs_to_insert.rbegin(), pairs_to_insert.rend(), pred_compare);
+    std::unique(pairs_to_insert.rbegin(), pairs_to_insert.rend(), pred_compare);
 
   std::sort(inserted_pairs.begin(), inserted_pairs.end(), pred_less);
 
