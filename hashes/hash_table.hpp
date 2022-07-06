@@ -1,6 +1,7 @@
 #ifndef HASH_TABLE_HPP
 #define HASH_TABLE_HPP
 
+#include "test.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
@@ -14,11 +15,10 @@
 inline size_t constrain_hash(size_t hash, size_t n_bkt) { return hash % n_bkt; }
 
 struct SimpleRehashPolicy {
-  using size_type = std::size_t;
   SimpleRehashPolicy(float lf = 1.0) : _max_load_factor(lf) {}
 
-  std::pair<bool, std::size_t> need_rehash(size_type n_bkt, size_type n_elem,
-                                           size_type n_ins) const {
+  std::pair<bool, std::size_t> need_rehash(std::size_t n_bkt, std::size_t n_elem,
+                                           std::size_t n_ins) const {
     if (n_elem + n_ins > std::floor(n_bkt * _max_load_factor)) {
       float n_bkt_min = (n_elem + n_ins) / _max_load_factor;
       return {true, std::max<std::size_t>(std::floor(n_bkt_min) + 1, n_bkt * 2)};
@@ -32,7 +32,21 @@ struct SimpleRehashPolicy {
   float _max_load_factor;
 };
 
-struct PrimeRehashPolicy {};
+struct PrimeRehashPolicy {
+  PrimeRehashPolicy(float lf = 1.0) : _max_load_factor(lf), _next_resize(0) {}
+
+  std::pair<bool, std::size_t> need_rehash(std::size_t n_bkt, std::size_t n_elem,
+                                           std::size_t n_ins) const;
+
+  std::size_t _next_n_bkt_prime(std::size_t n_bkt) const;
+
+  float max_load_factor() const { return _max_load_factor; }
+  void max_load_factor(float new_factor) { _max_load_factor = new_factor; }
+
+  float _max_load_factor;
+  mutable std::size_t _next_resize;
+  const static std::size_t _primes[];
+};
 
 template <class Key, class Value> struct HashTableNodeBase : public std::pair<const Key, Value> {
   using value_type = std::pair<const Key, Value>;
@@ -228,7 +242,9 @@ public:
     return end();
   }
 
-  iterator end() noexcept { return iterator{_buckets.end(), _buckets.end(), _buckets.back().end()}; }
+  iterator end() noexcept {
+    return iterator{_buckets.end(), _buckets.end(), _buckets.back().end()};
+  }
   iterator begin() noexcept {
     _buckets_iterator bkt = _buckets.begin();
 
@@ -262,15 +278,12 @@ private:
 };
 
 template <class Key, class Value>
-class HashTable
-    : public HashTable_impl<Key, Value, SimpleRehashPolicy, std::hash<Key>, std::equal_to<Key>> {
+using HashTable_SimpleRehash =
+    HashTable_impl<Key, Value, SimpleRehashPolicy, std::hash<Key>, std::equal_to<Key>>;
 
-  using _base = HashTable_impl<Key, Value, SimpleRehashPolicy, std::hash<Key>, std::equal_to<Key>>;
+template <class Key, class Value>
+using HashTable_PrimeRehash =
+    HashTable_impl<Key, Value, PrimeRehashPolicy, std::hash<Key>, std::equal_to<Key>>;
 
-public:
-  template <class ... Args>
-  HashTable(Args... args) : _base{args...} {}
-
-};
 
 #endif /* HASH_TABLE_HPP */

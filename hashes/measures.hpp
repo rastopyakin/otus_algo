@@ -53,11 +53,12 @@ template <class F, class... Args> double avg_fn_result(double tolerance, F f, Ar
 
 namespace chr = std::chrono;
 
-template <template <class, class> class HT, class... Args> double measure_insert(int N, Args... args) {
+template <template <class, class> class HT, class... Args>
+double measure_insert(int N, Args... args) {
 
   auto target_fn = [N, args...]() {
-    std::vector<KV_Pair> pairs_to_insert {make_test_insertions(N)};
-    HT<Key, Value> table {args...};
+    std::vector<KV_Pair> pairs_to_insert{make_test_insertions(N)};
+    HT<Key, Value> table{args...};
     chr::time_point<chr::high_resolution_clock> start, finish;
     start = chr::high_resolution_clock::now();
     for (const auto &[s, n] : pairs_to_insert) {
@@ -70,48 +71,62 @@ template <template <class, class> class HT, class... Args> double measure_insert
   return avg_fn_result(5e-3, target_fn);
 }
 
-template <template <class, class> class HT> double measure_find(int N) {
+template <template <class, class> class HT, class... Args>
+double measure_find(int N, Args... args) {
 
-  std::vector<KV_Pair> pairs_to_insert {make_test_insertions(N)};
-  HT<Key, Value> table;
+  std::vector<KV_Pair> pairs_to_insert{make_test_insertions(N)};
+  HT<Key, Value> table{args...};
+
+  for (const auto &[k, v] : pairs_to_insert)
+    table.insert_or_assign(k, v);
 
   auto target_fn = [&table, &pairs_to_insert](int n) {
     chr::time_point<chr::high_resolution_clock> start, finish;
+    typename HT<Key, Value>::iterator it{table.begin()};
 
     start = chr::high_resolution_clock::now();
     for (int i = 0; i < n; i++)
-      table.find(pairs_to_insert[i].first);
+      it = table.find(pairs_to_insert[i].first); // assigning and somehow using the result prevents
+                                                 // the call from being optimized out
+    finish = chr::high_resolution_clock::now();
+
+    it->second = Value{};
+
+    return static_cast<double>((finish - start).count());
+  };
+
+  return avg_fn_result(5e-4, target_fn, N);
+}
+
+template <template <class, class> class HT, class... Args>
+double measure_iterating(int N, Args... args) {
+
+  std::vector<KV_Pair> pairs_to_insert{make_test_insertions(N)};
+  HT<Key, Value> table{args...};
+
+  for (const auto &[k, v] : pairs_to_insert)
+    table.insert_or_assign(k, v);
+
+  using iterator = typename HT<Key, Value>::iterator;
+
+  iterator end = table.end();
+  Value def_val{};
+
+  auto target_fn = [&]() {
+    chr::time_point<chr::high_resolution_clock> start, finish;
+
+    iterator i = table.begin();
+
+    start = chr::high_resolution_clock::now();
+    for (; i != end; i++) {
+      i->second = def_val; // this prevents the loop from being optimized out
+    }
     finish = chr::high_resolution_clock::now();
 
     return static_cast<double>((finish - start).count());
   };
 
-  return avg_fn_result(1e-3, target_fn, N);
+  return avg_fn_result(1.5e-3, target_fn);
 }
-
-// template <template <class> class HT> double measure_erase(int N) {
-//   std::mt19937 gen;
-//   std::uniform_int_distribution<int> d{};
-
-//   std::vector<int> numbers;
-//   std::generate_n(std::back_inserter(numbers), N, [&gen, &d]() { return d(gen); });
-
-//   HT<int> tree;
-//   for (int i : numbers)
-//     tree.insert(i);
-
-//   auto target_fn = [&tree, &numbers, &gen](int n) {
-//     chr::time_point<chr::high_resolution_clock> start, finish;
-//     std::uniform_int_distribution<size_t> d{0, numbers.size() - 1};
-//     start = chr::high_resolution_clock::now();
-//     for (size_t i = 0; i < n; i++)
-//       tree.remove(numbers[d(gen)]);
-//     finish = chr::high_resolution_clock::now();
-
-//     return static_cast<double>((finish - start).count());
-//   };
-
-//   return avg_fn_result(1e-3, target_fn);
-// }
 
 #endif /* MEASURES_HPP */
