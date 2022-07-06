@@ -7,11 +7,11 @@ def get_data(fname) :
     times = np.split(data, 2, axis=1)[1].ravel()
     return (N, times)
 
-def plot_data_f(fname, ax, name) :
+def plot_data_f(fname, ax, name, mkr='.') :
     data  = np.loadtxt(fname, usecols=[0,1])
     N = np.split(data, 2, axis=1)[0].ravel()
     times = np.split(data, 2, axis=1)[1].ravel()
-    ax.plot(N, times, ls='dashed', lw=0.5, marker='.', label=name)
+    ax.plot(N, times, ls='dashed', lw=0.5, marker=mkr, label=name)
     return (N, times)
 
 def plot_fit_log_log(x, y, ax) :
