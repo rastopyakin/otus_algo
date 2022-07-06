@@ -64,10 +64,36 @@ private:
   void bigLeftRotation(std::unique_ptr<node_type> &_root) {
     smallRightRotation(_root->right);
     smallLeftRotation(_root);
+
+    // auto B = std::move(_root->right);
+    // _root->right = std::move(B->left->left);
+    // _root->height = std::max(height(_root->left), height(_root->right)) + 1;
+
+    // auto A = std::move(_root);
+    // _root = std::move(B->left);
+    // B->left = std::move(_root->right);
+    // B->height = std::max(height(B->right), height(B->left)) + 1;
+
+    // _root->left = std::move(A);
+    // _root->right = std::move(B);
+    // _root->height = std::max(height(_root->left), height(_root->right)) + 1;
   }
   void bigRightRotation(std::unique_ptr<node_type> &_root) {
     smallLeftRotation(_root->left);
     smallRightRotation(_root);
+
+    // auto B = std::move(_root->left);
+    // _root->left = std::move(B->right->right);
+    // _root->height = std::max(height(_root->left), height(_root->right)) + 1;
+
+    // auto A = std::move(_root);
+    // _root = std::move(B->right);
+    // B->right = std::move(_root->left);
+    // B->height = std::max(height(B->right), height(B->left)) + 1;
+
+    // _root->right = std::move(A);
+    // _root->left = std::move(B);
+    // _root->height = std::max(height(_root->left), height(_root->right)) + 1;
   }
 
   int height(const std::unique_ptr<node_type> &_node) const {
