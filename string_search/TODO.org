@@ -1,0 +1,2 @@
+* TODO Define the type
+[[file:full_search.hpp::auto length = std::distance(p_first, p_last);][here]]
