@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
 
   std::cin >> N;
 
-  std::cout << std::setprecision(12) << power_mult_rest(A, N) << "\n";
+  std::cout << std::setprecision(12) << power_iterative(A, N) << "\n";
 
   return 0;
 }

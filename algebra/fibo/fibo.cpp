@@ -27,13 +27,13 @@ int main(int argc, char *argv[]) {
   ulong n = 0;
   std::cin >> n;
 
-  // std::cout << fibo_iterative(n) << "\n";
+  std::cout << fibo_iterative(n) << "\n";
   matrix22<big_integer> m{1u, 1u, 1u, 0u};
   // std::cout << m;
-  if (n == 0)
-    std::cout << 0 << "\n";
-  else
-    std::cout << power(m, n - 1, matrix22<big_integer>::eye())(0,0) << "\n";
+  // if (n == 0)
+    // std::cout << 0 << "\n";
+  // else
+    // std::cout << power(m, n - 1, matrix22<big_integer>::eye())(0,0) << "\n";
 
 
   return 0;
