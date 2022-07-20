@@ -1,25 +1,29 @@
 #ifndef BM_SEARCH_HPP
 #define BM_SEARCH_HPP
 
+#include "counter.hpp"
 #include "types.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <iterator>
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <unordered_map>
 #include <vector>
 
-template <class CharT> class BMSkipper {
+template <class CharT, bool> class BMSkipper;
+
+// specialization for bytes
+template <class CharT> class BMSkipper<CharT, true> {
 public:
   template <class It> BMSkipper(It first, It last) {
-    static_assert(std::is_trivial_v<CharT>);
-    constexpr size_t table_size = 1 << sizeof(CharT) * 8;
 
-    skip_table.reserve(table_size);
-    skip_table.resize(table_size);
-    pos_type size = std::distance(first, last);
+    static_assert(std::is_same_v<CharT, typename std::iterator_traits<It>::value_type>);
+
+    const pos_type size = std::distance(first, last);
     std::fill(skip_table.begin(), skip_table.end(), size);
 
     pos_type index = 0;
@@ -31,16 +35,67 @@ public:
 
   pos_type skip(CharT ch) const { return skip_table[to_index(ch)]; }
 
+  static constexpr std::size_t table_size = 1 << sizeof(CharT) * 8;
+
 private:
-  constexpr pos_type to_index(CharT ch) const {
-    static_assert(std::is_trivial_v<CharT>);
-    return ch < 0 ? ch + (1 << 8 * sizeof(CharT)) : ch;
+  inline constexpr std::size_t to_index(CharT ch) const {
+    return static_cast<std::make_unsigned_t<CharT>>(ch);
   }
-  pos_collection_type skip_table{};
+
+private:
+  std::array<std::size_t, table_size> skip_table;
 };
 
-template <class RAIt_1, class RAIt_2,
-          class Skipper = BMSkipper<typename std::iterator_traits<RAIt_2>::value_type>>
+// specialization for measure of comparisons
+template <> class BMSkipper<CountingChar, false> {
+public:
+  template <class It> BMSkipper(It first, It last) {
+
+    const pos_type size = std::distance(first, last);
+    std::fill(skip_table.begin(), skip_table.end(), size);
+
+    pos_type index = 0;
+    std::advance(last, -1);
+    for (It it = first; it != last; it++, index++) {
+      skip_table[to_index(*it)] = size - 1 - index;
+    }
+  }
+
+  pos_type skip(const CountingChar &ch) const { return skip_table[to_index(ch)]; }
+
+  static constexpr std::size_t table_size = 1 << sizeof(char) * 8;
+private:
+  std::size_t to_index(const CountingChar &ch) const {
+    return char(ch) < 0 ? char(ch) + table_size : char(ch);
+  }
+
+private:
+  std::array<std::size_t, table_size> skip_table;
+};
+
+// specialization for general case
+template <class CharT> class BMSkipper<CharT, false> {
+public:
+  template <class It> BMSkipper(It first, It last) : _default_shift(std::distance(first, last)) {
+
+    pos_type index = 0;
+    std::advance(last, -1);
+    for (It it = first; it != last; it++, index++) {
+      _skip_table[*it] = _default_shift - 1 - index;
+    }
+  }
+
+  pos_type skip(const CharT &ch) const {
+    auto it = _skip_table.find(ch);
+    return it == _skip_table.end() ? _default_shift : it->second;
+  }
+
+private:
+  std::unordered_map<CharT, pos_type> _skip_table;
+  const pos_type _default_shift;
+};
+
+template <class RAIt_1, class RAIt_2>
 RAIt_1 boyer_moore_horspoole_search(RAIt_1 first, RAIt_1 last, RAIt_2 p_first, RAIt_2 p_last) {
 
   if (p_first == p_last)
@@ -48,7 +103,9 @@ RAIt_1 boyer_moore_horspoole_search(RAIt_1 first, RAIt_1 last, RAIt_2 p_first, R
 
   std::advance(first, std::distance(p_first, p_last) - 1);
 
-  Skipper skipper{p_first, p_last};
+  using CharT = typename std::iterator_traits<RAIt_2>::value_type;
+  BMSkipper<CharT, std::is_integral_v<CharT> && sizeof(CharT) == 1> skipper{p_first, p_last};
+  // BMSkipper<CharT, false> skipper{p_first, p_last};
 
   while (std::distance(first, last) > 0) {
 
@@ -68,8 +125,8 @@ RAIt_1 boyer_moore_horspoole_search(RAIt_1 first, RAIt_1 last, RAIt_2 p_first, R
   return last;
 }
 
-template <class RAIt_1, class RAIt_2, class OnFoundF,
-          class Skipper = BMSkipper<typename std::iterator_traits<RAIt_2>::value_type>>
+template <class RAIt_1, class RAIt_2, class OnFoundF>
+
 void boyer_moore_horspoole_search(RAIt_1 first, RAIt_1 last, RAIt_2 p_first, RAIt_2 p_last,
                                   OnFoundF &&on_found_f) {
 
@@ -80,7 +137,9 @@ void boyer_moore_horspoole_search(RAIt_1 first, RAIt_1 last, RAIt_2 p_first, RAI
 
   std::advance(first, std::distance(p_first, p_last) - 1);
 
-  Skipper skipper{p_first, p_last};
+  using CharT = typename std::iterator_traits<RAIt_2>::value_type;
+  BMSkipper<CharT, std::is_integral_v<CharT> && sizeof(CharT) == 1> skipper{p_first, p_last};
+  // BMSkipper<CharT, true> skipper{p_first, p_last};
 
   while (std::distance(first, last) > 0) {
 
@@ -158,8 +217,7 @@ template <class RAIt, class Container> void suffix_table(RAIt first, RAIt last, 
     cont[length - rev_z[i]] = i;
 }
 
-template <class RAIt_1, class RAIt_2,
-          class Skipper = BMSkipper<typename std::iterator_traits<RAIt_2>::value_type>>
+template <class RAIt_1, class RAIt_2>
 RAIt_1 boyer_moore_search(RAIt_1 first, RAIt_1 last, RAIt_2 p_first, RAIt_2 p_last) {
 
   if (p_first == p_last)
@@ -168,7 +226,9 @@ RAIt_1 boyer_moore_search(RAIt_1 first, RAIt_1 last, RAIt_2 p_first, RAIt_2 p_la
   size_t length = std::distance(p_first, p_last);
   std::advance(first, length - 1);
 
-  Skipper skipper{p_first, p_last};
+  using CharT = typename std::iterator_traits<RAIt_2>::value_type;
+  BMSkipper<CharT, std::is_integral_v<CharT> && sizeof(CharT) == 1> skipper{p_first, p_last};
+
   std::vector<diff_type> suffix(length + 1, length);
   suffix_table(p_first, p_last, suffix);
 
@@ -192,8 +252,7 @@ RAIt_1 boyer_moore_search(RAIt_1 first, RAIt_1 last, RAIt_2 p_first, RAIt_2 p_la
   return last;
 }
 
-template <class RAIt_1, class RAIt_2, class OnFound,
-          class Skipper = BMSkipper<typename std::iterator_traits<RAIt_2>::value_type>>
+template <class RAIt_1, class RAIt_2, class OnFound>
 void boyer_moore_search(RAIt_1 first, RAIt_1 last, RAIt_2 p_first, RAIt_2 p_last,
                         OnFound &&on_found) {
 
@@ -203,7 +262,9 @@ void boyer_moore_search(RAIt_1 first, RAIt_1 last, RAIt_2 p_first, RAIt_2 p_last
   size_t length = std::distance(p_first, p_last);
   std::advance(first, length - 1);
 
-  Skipper skipper{p_first, p_last};
+  using CharT = typename std::iterator_traits<RAIt_2>::value_type;
+  BMSkipper<CharT, std::is_integral_v<CharT> && sizeof(CharT) == 1> skipper{p_first, p_last};
+
   std::vector<diff_type> suffix(length + 1, length);
   suffix_table(p_first, p_last, suffix);
 
