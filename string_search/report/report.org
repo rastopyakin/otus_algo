@@ -1,0 +1,7 @@
+* String search algorithms
+** Implementation
+*** Full search
+*** Boyer-Moore-Horspool search
+*** Knutt-Morris-Pratt search
+
+** Comparison and analysis
