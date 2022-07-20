@@ -57,13 +57,8 @@ struct MeasureMode {
   } random{};
 
   // [pref-char + sequence of repeating fragments + suff char]
-  struct Degenerate {
-    char pref;
-    char sequenced[6];
-    char suff;;
-  };
-  constexpr static Degenerate degenerate_1{0, "a", 0};
-  constexpr static Degenerate degenerate_2{'a', "ba", 'c'};
+  constexpr static struct Degenerate {
+  } degenerate{};
 
   constexpr static struct SmallAlph { } small_alph{}; };
 
@@ -73,8 +68,7 @@ MeasureCaseT make_measure_case(pos_type pattern_length, const MeasureMode::Degen
 // random [ab] string and fixed [ab] pattern
 MeasureCaseT make_measure_case(pos_type pattern_length, const MeasureMode::SmallAlph &);
 
-double measure_string_fun(StringFunT f, size_t n, char pref = 0, char seq = 'a',
-                          char suff = 'b');
+double measure_string_fun(StringFunT f, size_t n, char pref = 0, char seq = 'a', char suff = 'b');
 
 double measure_search_fun(SearchFunAllT f, std::string_view text, std::string_view pattern);
 
@@ -118,11 +112,11 @@ double count_comparisons(CountingSearchfun f, pos_type pattern_length, const Mea
     return count_comparisons(f, text, pattern);
   };
 
-  return avg_fn_result(2.0e-4, target_fn, pattern_length);
+  return avg_fn_result(3.0e-4, target_fn, pattern_length);
 }
 
 inline double count_comparisons(CountingSearchfun f, pos_type pattern_length,
-                                 const MeasureMode::Degenerate &mode) {
+                                const MeasureMode::Degenerate &mode) {
   MeasureCaseT s{make_measure_case(pattern_length, mode)};
 
   CountingString text{}, pattern{};
