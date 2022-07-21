@@ -4,6 +4,7 @@
 #include "utf8_tools.hpp"
 
 #include <chrono>
+#include <cstddef>
 #include <numeric>
 #include <string>
 #include <string_view>
@@ -64,8 +65,10 @@ MeasureCaseT make_measure_case(pos_type pattern_length, const MeasureMode::Small
 double count_comparisons(CountingSearchfun f, const CountingString &text,
                       const CountingString &pattern) {
   f(text, pattern);
-  auto acc_op = [](auto i, const CountingChar &ch) { return i + ch.get(); };
+  auto acc_op = [](std::size_t i, const CountingChar &ch) { return i + ch.get(); };
 
-  return std::accumulate(text.begin(), text.end(), 0, acc_op) +
-         std::accumulate(pattern.begin(), pattern.end(), 0, acc_op);
+  const std::size_t init = 0;
+
+  return std::accumulate(text.begin(), text.end(), init, acc_op) +
+         std::accumulate(pattern.begin(), pattern.end(), init, acc_op);
 }
