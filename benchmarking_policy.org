@@ -1,0 +1,14 @@
+* Benchmarking policy
+Measuring the execution time of a piece of code is non-trivial task.
+
+* Systematic error sources
+First of all we need eliminate innaccuracy coming from the hardware itself (frequency
+scaling), the operating system and other active processes. The reason I call these
+inaccuracy sources systematic is that they can *systematically* affect the speed of
+execution for a long (much longer than the duration of one-shot execution) period of time.
+The rules I follow in my benchmarks are following:
+- minimize or disable CPU frequency scaling (performance governor)
+- fix the process CPU affinity so that to minimize the effect of process scheduling (*taskset -c*)
+- set the process nicety low (*nice -n -19*)
+
+* Random errors
