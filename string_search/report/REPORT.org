@@ -1,4 +1,22 @@
 * String search algorithms
+** What's done
+*** Boyer-Moore (task 22)
+- [X] Full search
+- [X] Boyer-Moore-Horspool search (bad char shifts)
+- [X] Text suffix shifts
+- [X] Complete Boyer-Moore search (both shifts)
+- [X] Tests && Benchmarking
+
+  *Total bytes : 10*
+
+*** Knutt-Morris-Pratt (task 24)
+- [ ] Pattern searching finite state machine
+- [X] Naive prefix function
+- [X] Fast prefix function
+- [X] Tests && Benchmarking
+
+  *Total bytes : 8*
+
 ** Implementation
 *** Full search
 *** Boyer-Moore-Horspool search
