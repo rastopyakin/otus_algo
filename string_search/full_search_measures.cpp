@@ -12,23 +12,19 @@ int main(int argc, char *argv[]) {
     full_search(t.begin(), t.end(), p.begin(), p.end(), [](auto){});
   };
 
-  auto [text, pattern] = make_measure_case(100, MeasureMode::small_alph);
+  for (pos_type length = 10; length < 2000'000; length *= 2) {
+    std::cout << length << " ";
 
-  CountingString t{}, p{};
-  std::copy(pattern.begin(), pattern.end(), std::back_inserter(p));
-  std::copy(text.begin(), text.end(), std::back_inserter(t));
+    std::cout << measure_search_fun(full_search_all, length, MeasureMode::random);
+    // std::cout << measure_search_fun(full_search_all, length, MeasureMode::small_alph);
+    // std::cout << measure_search_fun(full_search_all, length, MeasureMode::degenerate);
 
-  std::cout << "comparisons: " << count_comparisons(counting_fn, t, p) << "\n";
-  v0::full_search(text, pattern);
+    // std::cout << count_comparisons(counting_fn, length, MeasureMode::random);
+    // std::cout << count_comparisons(counting_fn, length, MeasureMode::degenerate);
+    // std::cout << count_comparisons(counting_fn, length, MeasureMode::small_alph);
 
-  std::cout << count_comparisons(counting_fn, 1000, MeasureMode::small_alph) << "\n";
-
-  // for (pos_type length = 10; length < 2000'000; length *= 2) {
-  //   std::cout << length << " ";
-  //   // std::cout << measure_search_fun(v0::full_search_all, length, MeasureMode::random) << "\n";
-  //   // std::cout << measure_search_fun(full_search_all, length, MeasureMode::degenerate) << "\n";
-  //   std::cout << measure_search_fun(v0::full_search_all, length, MeasureMode::small_alph) << "\n";
-  // }
+    std::cout << "\n";
+  }
 
   return 0;
 }

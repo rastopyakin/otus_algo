@@ -28,6 +28,7 @@ pos_collection_type kmp_search_all(std::basic_string_view<CharT> text,
   auto on_found = [&found, beg = text.begin()](auto it) { found.push_back(it - beg); };
 
   kmp_search_1(text.begin(), text.end(), pattern.begin(), pattern.end(), on_found);
+  // kmp_search_2(text.begin(), text.end(), pattern.begin(), pattern.end(), on_found);
 
   return found;
 }
