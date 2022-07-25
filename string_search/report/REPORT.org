@@ -19,10 +19,10 @@
 
 ** Implementation
 Each algorithm is implemented as a function in two versions:
-1. //algorithm_name(text_string, pattern_string, start_position) -> found_position//
-   Search for for the first occurence of the //pattern_string// in the //text_string//
-   after the given position //start_position//
-2. //algorithm_name_all(text_string, pattern_string) -> all_positions//
+1. /algorithm_name(text_string, pattern_string, start_position) -> found_position/
+   Search for for the first occurence of the //pattern_string// in the /text_string/
+   after the given position /start_position/
+2. /algorithm_name_all(text_string, pattern_string) -> all_positions/
    Search for all the occurrences of the pattern. Returns vector of the found positions.
 
 Each algorithm implementation is basically generic core function which is subsequently
