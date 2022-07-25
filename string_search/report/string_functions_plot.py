@@ -1,4 +1,4 @@
-sfrom plot_tools import *
+from plot_tools import *
 
 fig, ax = plt.subplots()
 

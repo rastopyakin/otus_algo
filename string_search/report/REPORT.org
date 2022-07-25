@@ -20,9 +20,12 @@
 ** Implementation
 Each algorithm is implemented as a function in two versions:
 1. /algorithm_name(text_string, pattern_string, start_position) -> found_position/
-   Search for for the first occurence of the //pattern_string// in the /text_string/
+
+   Search for for the first occurence of the /pattern_string/ in the /text_string/
    after the given position /start_position/
+
 2. /algorithm_name_all(text_string, pattern_string) -> all_positions/
+
    Search for all the occurrences of the pattern. Returns vector of the found positions.
 
 Each algorithm implementation is basically generic core function which is subsequently
@@ -56,6 +59,7 @@ Z-function]], [[https://github.com/rastopyakin/otus_algo/blob/cd4a1cba7ee11c960a
 *** Knutt-Morris-Pratt
 The KMP is based on the [[https://github.com/rastopyakin/otus_algo/blob/f7b7145bd333a4c7ea184bd042397d1efa604621/string_search/24_kmp/kmp_search.hpp#L12][prefix function]] (also see the [[https://github.com/rastopyakin/otus_algo/blob/f7b7145bd333a4c7ea184bd042397d1efa604621/string_search/24_kmp/kmp_search.cpp#L41][naive]] version). I decided to
 implement and benchmark two versions differing in how many char-char comparisons they do.
+Below the [[https://github.com/rastopyakin/otus_algo/blob/f7b7145bd333a4c7ea184bd042397d1efa604621/string_search/24_kmp/kmp_search.hpp#L29][Version 1]] is implied the KMP implementation unless otherwise specified.
 - Generic Implementation
   - [[https://github.com/rastopyakin/otus_algo/blob/f7b7145bd333a4c7ea184bd042397d1efa604621/string_search/24_kmp/kmp_search.hpp#L29][Version 1]]
   - [[https://github.com/rastopyakin/otus_algo/blob/f7b7145bd333a4c7ea184bd042397d1efa604621/string_search/24_kmp/kmp_search.hpp#L58][Version 2]] (twice more comparisons)
@@ -66,8 +70,84 @@ implement and benchmark two versions differing in how many char-char comparisons
   - [[https://github.com/rastopyakin/otus_algo/blob/f7b7145bd333a4c7ea184bd042397d1efa604621/string_search/24_kmp/kmp_search.cpp#L23][Specialized overload]]
 
 ** Comparison and analysis
+The /average/ performance of each algorithm was measured on random strings. The pattern
+length |P| is a varied parameter and the text length |T| is always 100*|P|. The /average/
+performance means that performance is benchmarked many times (until good accuracy is
+reached) on many string samples and then averaged over them.
 
+See [[file:~/Dropbox/study/algo/otus_algo/benchmarking_policy.org][The Benchmarking Policy]] for the details of benchmarking.
+
+*** Random a-z strings
+All the algorithms demonstrate linear O(|P|) complexity. In this case even full search is
+effective and the KMP is even less effective. The both Boyer-Moore algorithms are
+approximately 10 times faster, and the BMH slightly outperforms the BM. This corresponds
+with intuitive sense that on random strings of big enough alphabet the bad char heuristics
+should be the most effective way.
+
+[[file:random.png]]
+
+*** Small alphabet random strings (only two chars [a,b])
+But what if the alphabet consists of only two chars? In this case the possibility to
+encounter long fragments with the same char repeating is much higher. So at least the Full
+Search should become less effective.
+
+And actually it becomes less effective: in average searching in [a,b]-string is 10 times
+slower than in the case of big alphabet. Unexpectedly, the same performance drop is true
+for all the algorithms except BM: apprently the suffix heuristics give the best results.
+The "fast" KMP turned out to be as slow as simple Full search.
+
+
+[[file:small_alphabet.png]]
+
+*** Degenerate case (aaaa... strings)
+The last case to test is simply degenerate strings of the only one repeating char. The
+Full Search and BMH should demonstrate the worst O(|P|^2) complexity, while the KMP and BM, if
+implemented correctly, should still be O(|P|). And actually they behave as expected.
 
 [[file:degenerate.png]]
 
+*** Complexity expressed in terms of comparisons amount
+Let's count how many comparisons between chars each algorithm makes in average. With this
+in mind I introduce simple class [[https://github.com/rastopyakin/otus_algo/blob/a1b8c3f26dc0340ce15685f5cac8a3e85649887f/string_search/counter.hpp#L6][CountingChar]]. It overloads comparison operators and just
+increments the internal counter upon each comparison. When the algorithm is done, all we
+need to calculate the result is simply [[https://github.com/rastopyakin/otus_algo/blob/a1b8c3f26dc0340ce15685f5cac8a3e85649887f/string_search/measures.cpp#L65][accumulate]] all the counters. Also for the
+BM-algorithms appropriate [[https://github.com/rastopyakin/otus_algo/blob/113408cc59cad3b990853e997e0aad02cd30c433/string_search/22_boyer_moore/bm_search.hpp#L50][specialization]] of the BMSkipper is needed. Below is the the results
+briefly.
+
+**** Random strings
+The KMP makes exactly the same number of comparisons as Full Search
+
+[[file:random_comp.png]]
+
+**** Small alphabet strings
+Yeah! This time the KMP demonstrates modest supremacy over simple Full Search: it actually
+makes less comparisons in average.
+
+[[file:small_alphabet_comp.png]]
+
+**** Degenerate case (just for completeness)
+All as it should be
+
+[[file:degenerate_comp.png]]
+
 *** Conclusions
+In most cases the simple Full Search is not as bad as it appears. The KMP is theoretically
+fast, but slow in real life. The Boyer-Moore algorithm has become the king of pattern
+searching and now I have personal prove.
+
+*** What about two KMP versions?
+The KMP [[https://github.com/rastopyakin/otus_algo/blob/f7b7145bd333a4c7ea184bd042397d1efa604621/string_search/24_kmp/kmp_search.hpp#L87][Version 1]] makes twice less comparisons than [[https://github.com/rastopyakin/otus_algo/blob/f7b7145bd333a4c7ea184bd042397d1efa604621/string_search/24_kmp/kmp_search.hpp#L117][Version 2]]. But how this affects actual
+performance?
+
+Unexpectedly, the Version 2 is slightly faster on full alphabet random strings though it
+makes more comparisons. In the case of small alphabet the Version 1 is faster, but only
+40% faster, not twice.
+
+[[file:kmp_versions.png]]
+
+** Notes about Unicode
+All the algorithms should work for multibytes characters (char_16t, char32_t) and
+corresponding functions can be easily implemented as it is done for single byte chars.
+However, as the most popular encoding is single-byte UTF-8, this is not likely to be
+necessary. The UTF-8 design implies that all the per-char algorithms also remain working.
+[[https://github.com/rastopyakin/otus_algo/blob/65fd559fa7038bf9fdef5272b609b2d75a9683aa/string_search/test.cpp#L51][This]] test uses arbitrary UTF-8 strings and all works as intended.

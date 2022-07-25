@@ -23,7 +23,7 @@ plot_fit_log_log(n[part], t[part], ax)
 ax.set_xscale('log')
 ax.set_yscale('log')
 ax.set_xlabel('pattern length (|P|)')
-ax.set_ylabel('execution time, ns')
+ax.set_ylabel('number of comparisons')
 ax.set_title('Number of comparisons made by different algorithms'
              '\n(degenerate "aa.." text $T$ and pattern $P$). $|T| = 100*|P|$')
 

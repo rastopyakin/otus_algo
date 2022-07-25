@@ -25,7 +25,7 @@ plot_fit_log_log(n, t, ax)
 ax.set_xscale('log')
 ax.set_yscale('log')
 ax.set_xlabel('pattern length (|P|)')
-ax.set_ylabel('execution time, ns')
+ax.set_ylabel('number of comparisons')
 ax.set_title('Average number of comparisons made by different algorithms'
              '\nrandom text $T$ and pattern $P$, [a,b]-alphabet). $|T| = 100*|P|$')
 
