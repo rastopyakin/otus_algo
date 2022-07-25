@@ -18,9 +18,31 @@
   *Total bytes : 8*
 
 ** Implementation
+Each algorithm is implemented as a function in two versions:
+1. //algorithm_name(text_string, pattern_string, start_position) -> found_position//
+   Search for for the first occurence of the //pattern_string// in the //text_string//
+   after the given position //start_position//
+2. //algorithm_name_all(text_string, pattern_string) -> all_positions//
+   Search for all the occurrences of the pattern. Returns vector of the found positions.
+
+Each algorithm implementation is basically generic core function which is subsequently
+used in the functions implementing the algorithm for concrete types of the text and
+pattern. The namespace v0 contains non-generic and non-scalable implementations which
+don't follow this library-like design. They are mostly a prototypes.
+
 *** Full search
-*** Boyer-Moore-Horspool search
-*** Knutt-Morris-Pratt search
+- [[https://github.com/rastopyakin/otus_algo/blob/cd4a1cba7ee11c960a8f239c2726728f531ad191/string_search/full_search.hpp#L11][Generic Implementation]]
+  - [[https://github.com/rastopyakin/otus_algo/blob/cd4a1cba7ee11c960a8f239c2726728f531ad191/string_search/full_search.cpp#L8][Overload for std::string_view]]
+- [[https://github.com/rastopyakin/otus_algo/blob/cd4a1cba7ee11c960a8f239c2726728f531ad191/string_search/full_search.hpp#L37][Generic *_all implementation]]
+  - [[https://github.com/rastopyakin/otus_algo/blob/cd4a1cba7ee11c960a8f239c2726728f531ad191/string_search/full_search.cpp#L23][Overload for std::string_view]]
+
+*** Boyer-Moore-Horspool
+- [[https://github.com/rastopyakin/otus_algo/blob/cd4a1cba7ee11c960a8f239c2726728f531ad191/string_search/22_boyer_moore/bm_search.hpp#L98][Generic Implementation]]
+  - [[https://github.com/rastopyakin/otus_algo/blob/cd4a1cba7ee11c960a8f239c2726728f531ad191/string_search/22_boyer_moore/bm_search.cpp#L11][Overload for std::string_view]]
 
 ** Comparison and analysis
+
+
 [[file:degenerate.png]]
+
+*** Conclusions

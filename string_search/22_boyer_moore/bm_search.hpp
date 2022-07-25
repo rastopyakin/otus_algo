@@ -64,6 +64,7 @@ public:
   pos_type skip(const CountingChar &ch) const { return skip_table[to_index(ch)]; }
 
   static constexpr std::size_t table_size = 1 << sizeof(char) * 8;
+
 private:
   std::size_t to_index(const CountingChar &ch) const {
     return char(ch) < 0 ? char(ch) + table_size : char(ch);
@@ -126,7 +127,6 @@ RAIt_1 boyer_moore_horspoole_search(RAIt_1 first, RAIt_1 last, RAIt_2 p_first, R
 }
 
 template <class RAIt_1, class RAIt_2, class OnFoundF>
-
 void boyer_moore_horspoole_search(RAIt_1 first, RAIt_1 last, RAIt_2 p_first, RAIt_2 p_last,
                                   OnFoundF &&on_found_f) {
 
