@@ -37,8 +37,33 @@ don't follow this library-like design. They are mostly a prototypes.
   - [[https://github.com/rastopyakin/otus_algo/blob/cd4a1cba7ee11c960a8f239c2726728f531ad191/string_search/full_search.cpp#L23][Overload for std::string_view]]
 
 *** Boyer-Moore-Horspool
+Uses bad char skip table class BMSkipper specialized for [[https://github.com/rastopyakin/otus_algo/blob/36084c53df910fdd074a27c3343b068c948bfd02/string_search/22_boyer_moore/bm_search.hpp#L20][bytes]] (internally uses array) and
+for [[https://github.com/rastopyakin/otus_algo/blob/36084c53df910fdd074a27c3343b068c948bfd02/string_search/22_boyer_moore/bm_search.hpp#L78][other types]] (uses hash map).
+
 - [[https://github.com/rastopyakin/otus_algo/blob/cd4a1cba7ee11c960a8f239c2726728f531ad191/string_search/22_boyer_moore/bm_search.hpp#L98][Generic Implementation]]
   - [[https://github.com/rastopyakin/otus_algo/blob/cd4a1cba7ee11c960a8f239c2726728f531ad191/string_search/22_boyer_moore/bm_search.cpp#L11][Overload for std::string_view]]
+- [[https://github.com/rastopyakin/otus_algo/blob/36084c53df910fdd074a27c3343b068c948bfd02/string_search/22_boyer_moore/bm_search.hpp#L129][Generic *_all version]]
+  - [[https://github.com/rastopyakin/otus_algo/blob/cd4a1cba7ee11c960a8f239c2726728f531ad191/string_search/22_boyer_moore/bm_search.cpp#L26][Overload for std::string_view]]
+
+*** Boyer-Moore
+The [[https://github.com/rastopyakin/otus_algo/blob/36084c53df910fdd074a27c3343b068c948bfd02/string_search/22_boyer_moore/bm_search.hpp#L201][suffix table]] is calculated via [[https://github.com/rastopyakin/otus_algo/blob/36084c53df910fdd074a27c3343b068c948bfd02/string_search/22_boyer_moore/bm_search.hpp#L176][Z-function]]. Also see the naive implementations: [[https://github.com/rastopyakin/otus_algo/blob/cd4a1cba7ee11c960a8f239c2726728f531ad191/string_search/22_boyer_moore/bm_search.cpp#L290][naive
+Z-function]], [[https://github.com/rastopyakin/otus_algo/blob/cd4a1cba7ee11c960a8f239c2726728f531ad191/string_search/22_boyer_moore/bm_search.cpp#L148][suffix table]]. They by the way are useful for testing.
+- [[https://github.com/rastopyakin/otus_algo/blob/36084c53df910fdd074a27c3343b068c948bfd02/string_search/22_boyer_moore/bm_search.hpp#L220][Generic Implementation]]
+  - [[https://github.com/rastopyakin/otus_algo/blob/cd4a1cba7ee11c960a8f239c2726728f531ad191/string_search/22_boyer_moore/bm_search.cpp#L46][Overload for std::string_view]]
+- [[https://github.com/rastopyakin/otus_algo/blob/36084c53df910fdd074a27c3343b068c948bfd02/string_search/22_boyer_moore/bm_search.hpp#L255][Generic *_all version]]
+  - [[https://github.com/rastopyakin/otus_algo/blob/cd4a1cba7ee11c960a8f239c2726728f531ad191/string_search/22_boyer_moore/bm_search.cpp#L61][Overload for std::string_view]]
+
+*** Knutt-Morris-Pratt
+The KMP is based on the [[https://github.com/rastopyakin/otus_algo/blob/f7b7145bd333a4c7ea184bd042397d1efa604621/string_search/24_kmp/kmp_search.hpp#L12][prefix function]] (also see the [[https://github.com/rastopyakin/otus_algo/blob/f7b7145bd333a4c7ea184bd042397d1efa604621/string_search/24_kmp/kmp_search.cpp#L41][naive]] version). I decided to
+implement and benchmark two versions differing in how many char-char comparisons they do.
+- Generic Implementation
+  - [[https://github.com/rastopyakin/otus_algo/blob/f7b7145bd333a4c7ea184bd042397d1efa604621/string_search/24_kmp/kmp_search.hpp#L29][Version 1]]
+  - [[https://github.com/rastopyakin/otus_algo/blob/f7b7145bd333a4c7ea184bd042397d1efa604621/string_search/24_kmp/kmp_search.hpp#L58][Version 2]] (twice more comparisons)
+  - [[https://github.com/rastopyakin/otus_algo/blob/f7b7145bd333a4c7ea184bd042397d1efa604621/string_search/24_kmp/kmp_search.cpp#L10][Specialized overload]]
+- Generic *_all version
+  - [[https://github.com/rastopyakin/otus_algo/blob/f7b7145bd333a4c7ea184bd042397d1efa604621/string_search/24_kmp/kmp_search.hpp#L87][Version 1]]
+  - [[https://github.com/rastopyakin/otus_algo/blob/f7b7145bd333a4c7ea184bd042397d1efa604621/string_search/24_kmp/kmp_search.hpp#L117][Version 2]] (twice more comparisons)
+  - [[https://github.com/rastopyakin/otus_algo/blob/f7b7145bd333a4c7ea184bd042397d1efa604621/string_search/24_kmp/kmp_search.cpp#L23][Specialized overload]]
 
 ** Comparison and analysis
 

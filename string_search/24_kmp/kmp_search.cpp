@@ -12,7 +12,7 @@ pos_type kmp_search(std::basic_string_view<CharT> text, std::basic_string_view<C
                     pos_type start) {
 
   std::string_view::iterator it =
-      kmp_search_2(text.begin() + start, text.end(), pattern.begin(), pattern.end());
+      kmp_search_1(text.begin() + start, text.end(), pattern.begin(), pattern.end());
   return it != text.end() ? it - text.begin() : std::string_view::npos;
 }
 
